@@ -74,6 +74,7 @@ public class BeamPublish extends BaseStep implements StepInterface {
     List<ApiFuture<String>> messageIdFutures = new ArrayList<>();
     Publisher publisher = null;
     try {
+      topicName = this.getParentVariableSpace().environmentSubstitute(topicName);
       ServiceAccountCredentials credentials = (ServiceAccountCredentials)this.getCredentials();
       ProjectTopicName topic = ProjectTopicName.of(credentials.getProjectId(), topicName);
       publisher = Publisher.newBuilder(topicName).setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();

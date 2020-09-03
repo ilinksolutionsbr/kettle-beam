@@ -97,6 +97,7 @@ public class BeamJobConfigDialog {
   private TextVar wGcpProjectId;
   private TextVar wGcpAppName;
   private TextVar wGcpStagingLocation;
+  private TextVar wGcpTemplateLocation;
   private TextVar wGcpInitialNumberOfWorkers;
   private TextVar wGcpMaximumNumberOfWorkers;
   private TextVar wGcpAutoScalingAlgorithm;
@@ -223,6 +224,7 @@ public class BeamJobConfigDialog {
     wGcpProjectId.addSelectionListener( selAdapter );
     wGcpAppName.addSelectionListener( selAdapter );
     wGcpStagingLocation.addSelectionListener( selAdapter );
+    wGcpTemplateLocation.addSelectionListener( selAdapter );
     wGcpInitialNumberOfWorkers.addSelectionListener( selAdapter );
     wGcpMaximumNumberOfWorkers.addSelectionListener( selAdapter );
     wGcpStreaming.addSelectionListener( selAdapter );
@@ -765,6 +767,28 @@ public class BeamJobConfigDialog {
     fdGcpStagingLocation.right = new FormAttachment( 95, 0 );
     wGcpStagingLocation.setLayoutData( fdGcpStagingLocation );
     lastControl = wGcpStagingLocation;
+
+
+    // Template location
+    //
+    Label wlGcpTemplateLocation = new Label( wDataflowComp, SWT.RIGHT );
+    props.setLook( wlGcpTemplateLocation );
+    wlGcpTemplateLocation.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.GcpTemplateLocation.Label" ) );
+    FormData fdlGcpTemplateLocation = new FormData();
+    fdlGcpTemplateLocation.top = new FormAttachment( lastControl, margin );
+    fdlGcpTemplateLocation.left = new FormAttachment( 0, -margin ); // First one in the left top corner
+    fdlGcpTemplateLocation.right = new FormAttachment( middle, -margin );
+    wlGcpTemplateLocation.setLayoutData( fdlGcpTemplateLocation );
+    wGcpTemplateLocation = new TextVar( space, wDataflowComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wGcpTemplateLocation );
+    FormData fdGcpTemplateLocation = new FormData();
+    fdGcpTemplateLocation.top = new FormAttachment( wlGcpTemplateLocation, 0, SWT.CENTER );
+    fdGcpTemplateLocation.left = new FormAttachment( middle, 0 ); // To the right of the label
+    fdGcpTemplateLocation.right = new FormAttachment( 95, 0 );
+    wGcpTemplateLocation.setLayoutData( fdGcpTemplateLocation );
+    lastControl = wGcpTemplateLocation;
+
+
 
     // Initial number of workers
     //
@@ -1659,6 +1683,7 @@ public class BeamJobConfigDialog {
     wGcpProjectId.setText( Const.NVL( config.getGcpProjectId(), "" ) );
     wGcpAppName.setText( Const.NVL( config.getGcpAppName(), "" ) );
     wGcpStagingLocation.setText( Const.NVL( config.getGcpStagingLocation(), "" ) );
+    wGcpTemplateLocation.setText( Const.NVL( config.getGcpTemplateLocation(), "" ) );
     String workerCode = config.getGcpWorkerMachineType();
     String workerDescription = "";
     if ( StringUtils.isNotEmpty( workerCode ) ) {
@@ -1775,6 +1800,7 @@ public class BeamJobConfigDialog {
     cfg.setGcpProjectId( wGcpProjectId.getText() );
     cfg.setGcpAppName( wGcpAppName.getText() );
     cfg.setGcpStagingLocation( wGcpStagingLocation.getText() );
+    cfg.setGcpTemplateLocation( wGcpTemplateLocation.getText() );
     cfg.setGcpInitialNumberOfWorkers( wGcpInitialNumberOfWorkers.getText() );
     cfg.setGcpMaximumNumberOfWokers( wGcpMaximumNumberOfWorkers.getText() );
     cfg.setGcpStreaming( wGcpStreaming.getSelection() );

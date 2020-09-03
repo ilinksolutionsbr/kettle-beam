@@ -35,17 +35,16 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
     private String jsonField;
     private List<String> stepPluginClasses;
     private List<String> xpPluginClasses;
-    private List<String> keyValues;
 
-    private static final Logger LOG = LoggerFactory.getLogger( KettleRowToEntityFn.class );
-    private final Counter numErrors = Metrics.counter( "main", "BeamFirestoreOutputErrors" );
+    private static final Logger LOG = LoggerFactory.getLogger(KettleRowToEntityFn.class);
+    private final Counter numErrors = Metrics.counter("main", "BeamFirestoreOutputErrors");
 
     private RowMetaInterface rowMeta;
     private transient Counter initCounter;
     private transient Counter inputCounter;
     private transient Counter writtenCounter;
 
-    public KettleRowToEntityFn( String stepname, String projectId, String kind, String keyField, String jsonField, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+    public KettleRowToEntityFn(String stepname, String projectId, String kind, String keyField, String jsonField, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses) {
         this.stepname = stepname;
         this.projectId = projectId;
         this.kind = kind;
@@ -59,25 +58,24 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
     @Setup
     public void setUp() {
         try {
-            inputCounter = Metrics.counter( "input", stepname );
-            writtenCounter = Metrics.counter( "written", stepname );
+            inputCounter = Metrics.counter("input", stepname);
+            writtenCounter = Metrics.counter("written", stepname);
 
             // Initialize Kettle Beam
             //
-            BeamKettle.init( stepPluginClasses, xpPluginClasses );
-            this.rowMeta = JsonRowMeta.fromJson( rowMetaJson );
-            this.keyValues = new ArrayList<>();
+            BeamKettle.init(stepPluginClasses, xpPluginClasses);
+            this.rowMeta = JsonRowMeta.fromJson(rowMetaJson);
 
-            Metrics.counter( "init", stepname ).inc();
-        } catch ( Exception e ) {
+            Metrics.counter("init", stepname).inc();
+        } catch (Exception e) {
             numErrors.inc();
-            LOG.error( "Error in setup of KettleRow to Entity function", e );
-            throw new RuntimeException( "Error in setup of KettleRow to Entity function", e );
+            LOG.error("Error in setup of KettleRow to Entity function", e);
+            throw new RuntimeException("Error in setup of KettleRow to Entity function", e);
         }
     }
 
     @ProcessElement
-    public void processElement( ProcessContext processContext ) {
+    public void processElement(ProcessContext processContext) {
         try {
             KettleRow kettleRow = processContext.element();
             inputCounter.inc();
@@ -87,26 +85,26 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
             Entity.Builder entityBuilder = Entity.newBuilder();
 
             Map<String, Object> fields = null;
-            if(!Strings.isNullOrEmpty(this.jsonField)) {
+            if (!Strings.isNullOrEmpty(this.jsonField)) {
                 Object json = dataSet.get(jsonField);
                 if (json != null) {
                     fields = Json.getInstance().deserialize(json.toString());
                 }
-            }else {
+            } else {
                 fields = dataSet;
             }
             boolean isParsed = this.parse(fields, entityBuilder);
 
 
-            if(isParsed) {
+            if (isParsed) {
                 processContext.output(entityBuilder.build());
             }
             writtenCounter.inc();
 
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             numErrors.inc();
-            LOG.error( "Error in KettleRow to Entity function -> step '" + this.stepname + "'", e );
-            throw new RuntimeException( "Error in KettleRow to Entity function", e );
+            LOG.error("Error in KettleRow to Entity function -> step '" + this.stepname + "'", e);
+            throw new RuntimeException("Error in KettleRow to Entity function", e);
         }
     }
 
@@ -115,20 +113,40 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
         String field;
         Object value;
         int i = 0;
-        for(ValueMetaInterface valueMetaInterface : this.rowMeta.getValueMetaList()){
+        for (ValueMetaInterface valueMetaInterface : this.rowMeta.getValueMetaList()) {
             field = valueMetaInterface.getName().trim();
             value = null;
-            switch (valueMetaInterface.getType()){
-                case ValueMetaInterface.TYPE_STRING: value = this.rowMeta.getString(row, i); break;
-                case ValueMetaInterface.TYPE_INTEGER: value = this.rowMeta.getInteger(row, i); break;
-                case ValueMetaInterface.TYPE_NUMBER: value = this.rowMeta.getNumber(row, i); break;
-                case ValueMetaInterface.TYPE_BIGNUMBER: value = this.rowMeta.getBigNumber(row, i); break;
-                case ValueMetaInterface.TYPE_BOOLEAN: value = this.rowMeta.getBoolean(row, i); break;
-                case ValueMetaInterface.TYPE_DATE: value = this.rowMeta.getDate(row, i); break;
-                case ValueMetaInterface.TYPE_TIMESTAMP: value = this.rowMeta.getDate(row, i); break;
-                case ValueMetaInterface.TYPE_INET: value = this.rowMeta.getString(row, i); break;
-                case ValueMetaInterface.TYPE_NONE: value = this.rowMeta.getString(row, i); break;
-                case ValueMetaInterface.TYPE_SERIALIZABLE: value = this.rowMeta.getString(row, i); break;
+            switch (valueMetaInterface.getType()) {
+                case ValueMetaInterface.TYPE_STRING:
+                    value = this.rowMeta.getString(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_INTEGER:
+                    value = this.rowMeta.getInteger(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_NUMBER:
+                    value = this.rowMeta.getNumber(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_BIGNUMBER:
+                    value = this.rowMeta.getBigNumber(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_BOOLEAN:
+                    value = this.rowMeta.getBoolean(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_DATE:
+                    value = this.rowMeta.getDate(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_TIMESTAMP:
+                    value = this.rowMeta.getDate(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_INET:
+                    value = this.rowMeta.getString(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_NONE:
+                    value = this.rowMeta.getString(row, i);
+                    break;
+                case ValueMetaInterface.TYPE_SERIALIZABLE:
+                    value = this.rowMeta.getString(row, i);
+                    break;
             }
             dataSet.put(field, value);
             i++;
@@ -136,14 +154,14 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
         return dataSet;
     }
 
-    private boolean parse(Map<String, Object> fields, Entity.Builder entityBuilder) throws Exception{
+    private boolean parse(Map<String, Object> fields, Entity.Builder entityBuilder) throws Exception {
         Boolean result = false;
         String field;
         Object value;
         Value entityValue = null;
         boolean isFoundKey = false;
 
-        for(Map.Entry<String, Object> entry : fields.entrySet()){
+        for (Map.Entry<String, Object> entry : fields.entrySet()) {
             field = entry.getKey();
             value = entry.getValue();
 
@@ -156,47 +174,45 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
                 result = true;
 
             } else if (value instanceof Double) {
-                entityValue = Value.newBuilder().setDoubleValue((Double)value).build();
+                entityValue = Value.newBuilder().setDoubleValue((Double) value).build();
                 result = true;
 
             } else if (value instanceof BigDecimal) {
-                entityValue = Value.newBuilder().setDoubleValue(((BigDecimal)value).doubleValue()).build();
+                entityValue = Value.newBuilder().setDoubleValue(((BigDecimal) value).doubleValue()).build();
                 result = true;
 
             } else if (value instanceof Boolean) {
-                entityValue = Value.newBuilder().setBooleanValue((Boolean)value).build();
+                entityValue = Value.newBuilder().setBooleanValue((Boolean) value).build();
                 result = true;
 
             } else if (value instanceof com.google.protobuf.Timestamp) {
-                entityValue = Value.newBuilder().setTimestampValue((com.google.protobuf.Timestamp)value).build();
+                entityValue = Value.newBuilder().setTimestampValue((com.google.protobuf.Timestamp) value).build();
                 result = true;
 
             } else if (value instanceof Date) {
                 entityValue = Value.newBuilder().setTimestampValue(com.google.protobuf.util.Timestamps.fromMillis(((Date) value).getTime())).build();
                 result = true;
 
-            }else {
+            } else {
                 entityValue = Value.newBuilder().setStringValue(value.toString()).build();
                 result = true;
 
             }
 
             entityBuilder.putProperties(field, entityValue);
-            if(field.equalsIgnoreCase(this.keyField)){
-                String keyValue = value.toString();
-                if(this.keyValues.contains(keyValue)){return false;}
+            if (field.equalsIgnoreCase(this.keyField)) {
                 Key key = DatastoreHelper.makeKey(this.kind, value.toString()).build();
                 entityBuilder.setKey(key);
-                this.keyValues.add(keyValue);
                 isFoundKey = true;
             }
 
         }
 
-        if(!isFoundKey){throw new Exception("Campo Chave '" + this.keyField + "' não encontrado na entidade.");}
+        if (!isFoundKey) {
+            throw new Exception("Campo Chave '" + this.keyField + "' não encontrado na entidade.");
+        }
 
         return result;
     }
-
 
 }

@@ -33,20 +33,24 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
     // The values
     //
     for ( int i = 0; i < row.length; i++ ) {
-      Object object = row[ i ];
-      // Null?
-      //
-      out.writeBoolean( object == null );
-
-      if ( object != null ) {
-        // Type?
+      try {
+        Object object = row[i];
+        // Null?
         //
-        int objectType = getObjectType( object );
-        out.writeInt( objectType );
+        out.writeBoolean(object == null || (object instanceof byte[]));
 
-        // The object itself
-        //
-        write( out, objectType, object );
+        if (object != null && !(object instanceof byte[])) {
+          // Type?
+          //
+          int objectType = getObjectType(object);
+          out.writeInt(objectType);
+
+          // The object itself
+          //
+          write(out, objectType, object);
+        }
+      }catch (Exception ex){
+        throw ex;
       }
     }
     out.flush();
@@ -64,12 +68,16 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
     }
     row = new Object[ length ];
     for ( int i = 0; i < length; i++ ) {
-      // Null?
-      boolean isNull = in.readBoolean();
-      if ( !isNull ) {
-        int objectType = in.readInt();
-        Object object = read( in, objectType );
-        row[i] = object;
+      try{
+        // Null?
+        boolean isNull = in.readBoolean();
+        if ( !isNull ) {
+          int objectType = in.readInt();
+          Object object = read( in, objectType );
+          row[i] = object;
+        }
+      }catch (Exception ex){
+        throw ex;
       }
     }
 

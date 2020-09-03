@@ -118,6 +118,7 @@ public class TransMetaPipelineConverter {
     stepHandlers.put( BeamConst.STRING_BEAM_KAFKA_CONSUME_PLUGIN_ID, new BeamKafkaInputStepHandler( beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses ) );
     stepHandlers.put( BeamConst.STRING_BEAM_KAFKA_PRODUCE_PLUGIN_ID, new BeamKafkaOutputStepHandler( beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses ) );
     stepHandlers.put( BeamConst.STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID, new BeamFirestoreOutputStepHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
+    stepHandlers.put( BeamConst.STRING_BEAM_DATABASE_PLUGIN_ID, new BeamDatabaseConnectorHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     genericStepHandler = new BeamGenericStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses );
   }
 
@@ -213,11 +214,13 @@ public class TransMetaPipelineConverter {
   }
 
   private void handleBeamInputSteps( LogChannelInterface log, Map<String, PCollection<KettleRow>> stepCollectionMap, Pipeline pipeline ) throws KettleException, IOException {
-
     List<StepMeta> beamInputStepMetas = findBeamInputs();
     for ( StepMeta stepMeta : beamInputStepMetas ) {
       BeamStepHandler stepHandler = stepHandlers.get( stepMeta.getStepID() );
-      stepHandler.handleStep( log, stepMeta, stepCollectionMap, pipeline, transMeta.getStepFields( stepMeta ), null, null );
+      List<StepMeta> previousSteps = transMeta.findPreviousSteps( stepMeta, false );
+      if(previousSteps.size() == 0) {
+        stepHandler.handleStep(log, stepMeta, stepCollectionMap, pipeline, transMeta.getStepFields(stepMeta), null, null);
+      }
     }
   }
 
@@ -227,21 +230,25 @@ public class TransMetaPipelineConverter {
       BeamStepHandler stepHandler = stepHandlers.get( stepMeta.getStepID() );
 
       List<StepMeta> previousSteps = transMeta.findPreviousSteps( stepMeta, false );
+
       if ( previousSteps.size() > 1 ) {
         throw new KettleException( "Combining data from multiple steps is not supported yet!" );
+
+      }else if(previousSteps.size() == 1){
+        StepMeta previousStep = previousSteps.get( 0 );
+
+        PCollection<KettleRow> input = stepCollectionMap.get( previousStep.getName() );
+        if ( input == null ) {
+          throw new KettleException( "Previous PCollection for step " + previousStep.getName() + " could not be found" );
+        }
+
+        // What fields are we getting from the previous step(s)?
+        //
+        RowMetaInterface rowMeta = transMeta.getStepFields( previousStep );
+
+        stepHandler.handleStep( log, stepMeta, stepCollectionMap, pipeline, rowMeta, previousSteps, input );
+
       }
-      StepMeta previousStep = previousSteps.get( 0 );
-
-      PCollection<KettleRow> input = stepCollectionMap.get( previousStep.getName() );
-      if ( input == null ) {
-        throw new KettleException( "Previous PCollection for step " + previousStep.getName() + " could not be found" );
-      }
-
-      // What fields are we getting from the previous step(s)?
-      //
-      RowMetaInterface rowMeta = transMeta.getStepFields( previousStep );
-
-      stepHandler.handleStep( log, stepMeta, stepCollectionMap, pipeline, rowMeta, previousSteps, input );
     }
   }
 

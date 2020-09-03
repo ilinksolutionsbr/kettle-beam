@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="312px"
+   height="278px"
+   viewBox="0 0 312 278"
+   version="1.1"
+   id="svg4509"
+   sodipodi:docname="beam-gcp-firestore-input.svg"
+   inkscape:version="0.92.1 r15371">
+  <metadata
+     id="metadata4513">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="964"
+     inkscape:window-height="647"
+     id="namedview4511"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:snap-intersection-paths="true"
+     inkscape:object-paths="false"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-midpoints="true"
+     inkscape:zoom="0.282334"
+     inkscape:cx="716.113"
+     inkscape:cy="467.33337"
+     inkscape:window-x="2591"
+     inkscape:window-y="285"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg4509" />
+  <!-- Generator: Sketch 49.3 (51167) - http://www.bohemiancoding.com/sketch -->
+  <title
+     id="title4485">Cloud_Firestore_Hex</title>
+  <desc
+     id="desc4487">Created with Sketch.</desc>
+  <defs
+     id="defs4494">
+    <linearGradient
+       x1="225520%"
+       y1="113617%"
+       x2="225520%"
+       y2="118037%"
+       id="linearGradient-1">
+      <stop
+         stop-color="#4387FD"
+         offset="0%"
+         id="stop4489" />
+      <stop
+         stop-color="#4683EA"
+         offset="100%"
+         id="stop4491" />
+    </linearGradient>
+  </defs>
+  <g
+     id="Cloud_Firestore_Hex"
+     stroke="none"
+     stroke-width="1"
+     fill="none"
+     fill-rule="evenodd">
+    <g
+       id="g4506">
+      <g
+         id="Group-17-Copy-11"
+         fill="url(#linearGradient-1)"
+         fill-rule="nonzero">
+        <path
+           d="M67.920766,263.342 L3.98629787,152.7278 C-1.01869659,144.070077 -1.01869659,133.403323 3.98629787,124.7456 L67.920766,14.1314 C72.9324479,5.48791845 82.1772643,0.16767335 92.1782553,0.1716 L220.047191,0.1716 C230.048182,0.16767335 239.292999,5.48791845 244.304681,14.1314 L308.239149,124.7456 C313.244143,133.403323 313.244143,144.070077 308.239149,152.7278 L244.304681,263.342 C239.292999,271.985482 230.048182,277.305727 220.047191,277.3018 L92.1782553,277.3018 C82.1772643,277.305727 72.9324479,271.985482 67.920766,263.342 Z"
+           id="Shape" />
+      </g>
+      <path
+         d="M293.524842,175.989804 L209,99 L107,106 L107,129 L119,139 L130.5,147.5 L108,172 L205.287158,275.989804 C205.287158,275.989804 222.5,277.489804 232,273.5 C234.539566,271.181266 239.656588,269.520042 245,261.5 C250.343412,253.479958 293.524842,175.989804 293.524842,175.989804 Z"
+         id="path4498"
+         fill="#000000"
+         fill-rule="nonzero"
+         opacity="0.07" />
+      <g
+         id="Group-11-Copy-4"
+         transform="translate(106.000000, 81.000000)"
+         fill="#FFFFFF">
+        <polygon
+           id="Rectangle-15"
+           points="0.902735562 20.4855521 52.709637 0 103.866083 19.0345717 103.866083 48.2069143 52.709637 29.1723426 0.902735562 49.6578947" />
+        <polygon
+           id="polygon4501"
+           points="1.55319149 62.7930857 52.709637 43.7585139 103.866083 62.7930857 103.866083 91.9654283 52.709637 72.9308566 1.55319149 91.9654283" />
+        <polygon
+           id="polygon4503"
+           points="52.709637 85.4742002 67.3257643 84.6723426 92.9039871 95.6119711 52.709637 111" />
+      </g>
+    </g>
+  </g>
+  <g
+     id="g4528"
+     transform="matrix(0.62875971,0,0,-0.75512843,-72.135831,307.3557)"
+     style="fill:#000000">
+    <path
+       sodipodi:nodetypes="ccccc"
+       inkscape:connector-curvature="0"
+       id="rect4515"
+       d="m 450.18469,172.81081 h 145.88544 l -72.94272,90.16216 v 0 z"
+       style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.75590551;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <path
+       style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.77071542;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 492.13574,54.157021 h 61.98333 V 182.1083 h -61.98333 z"
+       id="rect4524"
+       inkscape:connector-curvature="0" />
+  </g>
+  <g
+     id="g4528-1"
+     transform="matrix(0.62875971,0,0,-0.75512843,-67.934893,309.99362)"
+     style="fill:#ffff00">
+    <path
+       sodipodi:nodetypes="ccccc"
+       inkscape:connector-curvature="0"
+       id="rect4515-4"
+       d="m 450.18469,172.81081 h 145.88544 l -72.94272,90.16216 v 0 z"
+       style="opacity:1;vector-effect:none;fill:#ffff00;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.75590551;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <path
+       style="opacity:1;vector-effect:none;fill:#ffff00;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.77071542;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 492.13574,54.157021 h 61.98333 V 182.1083 h -61.98333 z"
+       id="rect4524-6"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

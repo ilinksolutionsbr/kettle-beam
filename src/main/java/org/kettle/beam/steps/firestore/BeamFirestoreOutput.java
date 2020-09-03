@@ -68,6 +68,9 @@ public class BeamFirestoreOutput extends BaseStep implements StepInterface {
             String keyField = meta.getKeyField().trim();
             String jsonField = !Strings.isNullOrEmpty(meta.getJsonField()) ? meta.getJsonField().trim() : "";
 
+            kind = this.getParentVariableSpace().environmentSubstitute(kind);
+            keyField = this.getParentVariableSpace().environmentSubstitute(keyField);
+            jsonField = this.getParentVariableSpace().environmentSubstitute(jsonField);
 
             Map<String, Object> dataSet = this.getDateSet(row);
             Map<String, Object> fields = null;

@@ -24,6 +24,7 @@ import org.apache.flink.api.common.ExecutionMode;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.JobParameter;
 import org.kettle.beam.metastore.RunnerType;
@@ -418,6 +419,10 @@ public class KettleBeamPipelineExecutor {
     options.setProject( space.environmentSubstitute( config.getGcpProjectId() ) );
     options.setAppName( space.environmentSubstitute( config.getGcpAppName() ) );
     options.setStagingLocation( space.environmentSubstitute( config.getGcpStagingLocation() ) );
+
+    String gcpTemplateLocation = space.environmentSubstitute(config.getGcpTemplateLocation());
+    if(!Strings.isNullOrEmpty(gcpTemplateLocation)){options.setTemplateLocation(gcpTemplateLocation);}
+
     if ( StringUtils.isNotEmpty( config.getGcpInitialNumberOfWorkers() ) ) {
       int numWorkers = Const.toInt( space.environmentSubstitute( config.getGcpInitialNumberOfWorkers() ), -1 );
       if ( numWorkers >= 0 ) {

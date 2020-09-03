@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.kettle.beam.core.BeamDefaults;
+import org.kettle.beam.core.util.Web;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.plugins.PluginInterface;
@@ -27,6 +28,12 @@ import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Classe responsável por criar a janela de configuração do step
+ * Firestore Output.
+ *
+ * @author Renato Dornelas Cardoso <renato@romaconsulting.com.br>
+ */
 public class BeamFirestoreOutputDialog extends BaseStepDialog implements StepDialogInterface {
 
     private static Class<?> PACKAGE = BeamFirestoreOutput.class; // for i18n purposes, needed by Translator2!!
@@ -219,23 +226,9 @@ public class BeamFirestoreOutputDialog extends BaseStepDialog implements StepDia
         Button helpButton = new Button(shell, SWT.PUSH);
         helpButton.setText("?");
         helpButton.addListener(SWT.Selection, e ->
-                openUrlHelp("https://callink.atlassian.net/wiki/spaces/CBD/pages/584548483/Step+Firestore+Datastore+Input")
+                Web.open(this,"https://callink.atlassian.net/wiki/spaces/CBD/pages/584548483/Step+Firestore+Datastore+Input")
         );
         return helpButton;
-    }
-
-    /**
-     * Método responsável por abrir uma no Browser.
-     */
-    private void openUrlHelp(String url) {
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            try {
-                Desktop.getDesktop().browse(new URI(url));
-            } catch (Exception ex) {;
-                this.log.logDetailed(BeamConst.STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID + "-> Ocorreu um erro inesperado em openUrlHelp(). Exception : ", ex);
-                Logger.getLogger(BeamFirestoreOutputDialog.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
     }
 
     /**

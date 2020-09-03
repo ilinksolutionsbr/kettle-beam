@@ -63,6 +63,9 @@ public class BeamJobConfig {
   private String gcpStagingLocation;
 
   @MetaStoreAttribute
+  private String gcpTemplateLocation;
+
+  @MetaStoreAttribute
   private String gcpInitialNumberOfWorkers;
 
   @MetaStoreAttribute
@@ -323,6 +326,22 @@ public class BeamJobConfig {
    */
   public void setGcpStagingLocation( String gcpStagingLocation ) {
     this.gcpStagingLocation = gcpStagingLocation;
+  }
+
+  /**
+   * Gets gcpTemplateLocation
+   *
+   * @return value of gcpTemplateLocation
+   */
+  public String getGcpTemplateLocation() {
+    return gcpTemplateLocation;
+  }
+
+  /**
+   * @param gcpTemplateLocation The gcpTemplateLocation to set
+   */
+  public void setGcpTemplateLocation( String gcpTemplateLocation ) {
+    this.gcpTemplateLocation = gcpTemplateLocation;
   }
 
   /**

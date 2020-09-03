@@ -202,6 +202,7 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
     wFields.setLayoutData( fdFields );
     lastControl = wFields;
 
+
     // Add listeners
     lsOK = e -> ok();
     lsCancel = e -> cancel();
