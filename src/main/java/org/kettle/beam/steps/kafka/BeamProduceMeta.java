@@ -53,7 +53,7 @@ public class BeamProduceMeta extends BaseStepMeta implements StepMetaInterface {
   }
 
   @Override public StepInterface getStep( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans ) {
-    return new BeamConsume( stepMeta, stepDataInterface, copyNr, transMeta, trans );
+    return new BeamProduce( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
   @Override public StepDataInterface getStepData() {
