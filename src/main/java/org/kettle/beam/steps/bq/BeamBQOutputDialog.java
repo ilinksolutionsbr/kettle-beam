@@ -43,6 +43,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
   private TextVar wProjectId;
   private TextVar wDatasetId;
   private TextVar wTableId;
+  private TextVar wTempPath;
   private Button wCreateIfNeeded;
   private Button wTruncateTable;
   private Button wFailIfNotEmpty;
@@ -142,6 +143,23 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wTableId.setLayoutData( fdTableId );
     lastControl = wTableId;
 
+    Label wlTempPath = new Label( shell, SWT.RIGHT );
+    wlTempPath.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.TempPath" ) );
+    props.setLook( wlTempPath );
+    FormData fdlTempPath = new FormData();
+    fdlTempPath.left = new FormAttachment( 0, 0 );
+    fdlTempPath.top = new FormAttachment( lastControl, margin );
+    fdlTempPath.right = new FormAttachment( middle, -margin );
+    wlTempPath.setLayoutData( fdlTempPath );
+    wTempPath = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wTempPath );
+    FormData fdTempPath = new FormData();
+    fdTempPath.left = new FormAttachment( middle, 0 );
+    fdTempPath.top = new FormAttachment( wlTempPath, 0, SWT.CENTER );
+    fdTempPath.right = new FormAttachment( 100, 0 );
+    wTempPath.setLayoutData( fdTempPath );
+    lastControl = wTempPath;
+
     Label wlCreateIfNeeded = new Label( shell, SWT.RIGHT );
     wlCreateIfNeeded.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.CreateIfNeeded" ) );
     props.setLook( wlCreateIfNeeded );
@@ -228,6 +246,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wProjectId.addSelectionListener( lsDef );
     wDatasetId.addSelectionListener( lsDef );
     wTableId.addSelectionListener( lsDef );
+    wTempPath.addSelectionListener( lsDef );
 
     // Detect X or ALT-F4 or something that kills this window...
     shell.addShellListener( new ShellAdapter() {
@@ -258,6 +277,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wProjectId.setText(Const.NVL(input.getProjectId(), ""));
     wDatasetId.setText(Const.NVL(input.getDatasetId(), ""));
     wTableId.setText(Const.NVL(input.getTableId(), ""));
+    wTempPath.setText(Const.NVL(input.getTempPath(), ""));
     wCreateIfNeeded.setSelection( input.isCreatingIfNeeded() );
     wTruncateTable.setSelection( input.isTruncatingTable() );
     wFailIfNotEmpty.setSelection( input.isFailingIfNotEmpty() );
@@ -287,6 +307,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     in.setProjectId( wProjectId.getText() );
     in.setDatasetId( wDatasetId.getText() );
     in.setTableId( wTableId.getText() );
+    in.setTempPath( wTempPath.getText() );
     in.setCreatingIfNeeded( wCreateIfNeeded.getSelection() );
     in.setTruncatingTable( wTruncateTable.getSelection() );
     in.setFailingIfNotEmpty( wFailIfNotEmpty.getSelection() );

@@ -7,6 +7,7 @@ import com.google.api.services.bigquery.model.TableSchema;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
@@ -16,6 +17,7 @@ import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.fn.KettleToBQTableRowFn;
 import org.kettle.beam.core.util.JsonRowMeta;
+import org.kettle.beam.core.util.Strings;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   private String projectId;
   private String datasetId;
   private String tableId;
+  private String tempPath;
   private String rowMetaJson;
   private boolean createIfNeeded;
   private boolean truncateTable;
@@ -46,11 +49,12 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   public BeamBQOutputTransform() {
   }
 
-  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, String tempPath, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     this.stepname = stepname;
     this.projectId = projectId;
     this.datasetId = datasetId;
     this.tableId = tableId;
+    this.tempPath = tempPath;
     this.createIfNeeded = createIfNeeded;
     this.truncateTable = truncateTable;
     this.failIfNotEmpty = failIfNotEmpty;
@@ -125,6 +129,11 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
         .withCreateDisposition( createDisposition )
         .withWriteDisposition( writeDisposition )
         .withFormatFunction( formatFunction );
+
+      if(!Strings.isNullOrEmpty(this.tempPath)){
+        bigQueryWrite.withCustomGcsTempLocation(ValueProvider.StaticValueProvider.of(this.tempPath));
+      }
+
 
       // TODO: pass the results along the way at some point
       //

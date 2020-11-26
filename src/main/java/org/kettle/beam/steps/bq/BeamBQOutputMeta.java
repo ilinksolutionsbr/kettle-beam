@@ -40,6 +40,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public static final String PROJECT_ID = "project_id";
   public static final String DATASET_ID = "dataset_id";
   public static final String TABLE_ID = "table_id";
+  public static final String TEMP_PATH = "temp_path";
   public static final String CREATE_IF_NEEDED = "create_if_needed";
   public static final String TRUNCATE_TABLE = "truncate_table";
   public static final String FAIL_IF_NOT_EMPTY = "fail_if_not_empty";
@@ -47,6 +48,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   private String projectId;
   private String datasetId;
   private String tableId;
+  private String tempPath;
   private boolean creatingIfNeeded;
   private boolean truncatingTable;
   private boolean failingIfNotEmpty;
@@ -80,6 +82,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     xml.append( XMLHandler.addTagValue( PROJECT_ID, projectId ) );
     xml.append( XMLHandler.addTagValue( DATASET_ID, datasetId ) );
     xml.append( XMLHandler.addTagValue( TABLE_ID, tableId) );
+    xml.append( XMLHandler.addTagValue( TEMP_PATH, tempPath) );
     xml.append( XMLHandler.addTagValue( CREATE_IF_NEEDED, creatingIfNeeded) );
     xml.append( XMLHandler.addTagValue( TRUNCATE_TABLE, truncatingTable) );
     xml.append( XMLHandler.addTagValue( FAIL_IF_NOT_EMPTY, failingIfNotEmpty) );
@@ -90,6 +93,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     projectId = XMLHandler.getTagValue( stepNode, PROJECT_ID );
     datasetId= XMLHandler.getTagValue( stepNode, DATASET_ID );
     tableId= XMLHandler.getTagValue( stepNode, TABLE_ID);
+    tempPath= XMLHandler.getTagValue( stepNode, TEMP_PATH);
     creatingIfNeeded= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, CREATE_IF_NEEDED) );
     truncatingTable= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, TRUNCATE_TABLE) );
     failingIfNotEmpty= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, FAIL_IF_NOT_EMPTY) );
@@ -142,6 +146,24 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public void setTableId( String tableId ) {
     this.tableId = tableId;
   }
+
+
+  /**
+   * Gets tempPath
+   *
+   * @return value of tempPath
+   */
+  public String getTempPath() {
+    return tempPath;
+  }
+
+  /**
+   * @param tempPath The tempPath to set
+   */
+  public void setTempPath( String tempPath ) {
+    this.tempPath = tempPath;
+  }
+
 
   /**
    * Gets creatingIfNeeded
