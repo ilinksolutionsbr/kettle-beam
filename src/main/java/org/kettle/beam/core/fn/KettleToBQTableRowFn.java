@@ -67,7 +67,7 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
         if (!valueMeta.isNull( valueData )) {
           switch ( valueMeta.getType() ) {
             case ValueMetaInterface.TYPE_STRING: tableRow.put( valueMeta.getName(), valueMeta.getString( valueData ) ); break;
-            case ValueMetaInterface.TYPE_INTEGER: tableRow.put( valueMeta.getName(), valueMeta.getInteger( valueData ) ); break;
+            case ValueMetaInterface.TYPE_INTEGER: tableRow.put( valueMeta.getName(), valueMeta.getInteger( new Long(valueData.toString()) )); break;
             case ValueMetaInterface.TYPE_DATE:
               Date date = valueMeta.getDate( valueData );
               String formattedDate = simpleDateFormat.format( date );
@@ -75,6 +75,8 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
               break;
             case ValueMetaInterface.TYPE_BOOLEAN: tableRow.put( valueMeta.getName(), valueMeta.getBoolean( valueData ) ); break;
             case ValueMetaInterface.TYPE_NUMBER: tableRow.put( valueMeta.getName(), valueMeta.getNumber( valueData ) ); break;
+            case ValueMetaInterface.TYPE_BIGNUMBER: tableRow.put( valueMeta.getName(), valueMeta.getBigNumber( valueData ) ); break;
+            case ValueMetaInterface.TYPE_NONE: tableRow.put( valueMeta.getName(), valueMeta.getString( valueData ) ); break;
             default:
               throw new RuntimeException( "Data type conversion from Kettle to BigQuery TableRow not supported yet: " +valueMeta.toString());
           }
