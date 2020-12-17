@@ -133,7 +133,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
 
       /*
       if(!Strings.isNullOrEmpty(this.tempPath)){
-        bigQueryWrite.withCustomGcsTempLocation(ValueProvider.StaticValueProvider.of(this.tempPath));
+        bigQueryWrite = bigQueryWrite.withCustomGcsTempLocation(ValueProvider.StaticValueProvider.of(this.tempPath));
       }
       */
 
