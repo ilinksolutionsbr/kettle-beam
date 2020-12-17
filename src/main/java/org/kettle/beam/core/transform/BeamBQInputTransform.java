@@ -1,7 +1,11 @@
 package org.kettle.beam.core.transform;
 
 import com.google.api.services.bigquery.model.TableReference;
+import com.google.datastore.v1.Query;
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions;
+import org.apache.beam.sdk.io.gcp.datastore.DatastoreIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -77,11 +81,16 @@ public class BeamBQInputTransform extends PTransform<PBegin, PCollection<KettleR
           .from( tableReference )
         ;
       } else {
+        BigQueryOptions options = input.getPipeline().getOptions().as(BigQueryOptions.class);
+        options.setProject(projectId);
         bqTypedRead = BigQueryIO
-          .read( toKettleFn )
+          .read(toKettleFn)
           .fromQuery( query )
+          .withMethod(BigQueryIO.TypedRead.Method.DIRECT_READ)
+          .usingStandardSql()
         ;
       }
+
 
       // Apply the function
       //

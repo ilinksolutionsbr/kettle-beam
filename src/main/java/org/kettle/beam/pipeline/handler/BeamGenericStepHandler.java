@@ -183,7 +183,7 @@ public class BeamGenericStepHandler extends BeamBaseStepHandler implements BeamS
       stepCollectionMap.put( tupleId, targetPCollection );
     }
 
-    log.logBasic( "Handled step (STEP) : " + stepMeta.getName() + ", gets data from " + previousSteps.size() + " previous step(s), targets=" + targetSteps.size() + ", infos=" + infoSteps.size() );
+    log.logBasic( "Handled step (STEP) : " + stepMeta.getName() + ", gets data from " + (previousSteps != null ? previousSteps.size() : 0) + " previous step(s), targets=" + (targetSteps != null ? targetSteps.size() : 0) + ", infos=" + (infoSteps != null ? infoSteps.size() : 0) );
   }
 
   public static boolean needsBatching( StepMeta stepMeta ) {

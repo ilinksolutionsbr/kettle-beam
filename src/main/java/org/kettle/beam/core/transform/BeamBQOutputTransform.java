@@ -34,7 +34,6 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   private String projectId;
   private String datasetId;
   private String tableId;
-  private String tempPath;
   private String rowMetaJson;
   private boolean createIfNeeded;
   private boolean truncateTable;
@@ -49,12 +48,11 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   public BeamBQOutputTransform() {
   }
 
-  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, String tempPath, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     this.stepname = stepname;
     this.projectId = projectId;
     this.datasetId = datasetId;
     this.tableId = tableId;
-    this.tempPath = tempPath;
     this.createIfNeeded = createIfNeeded;
     this.truncateTable = truncateTable;
     this.failIfNotEmpty = failIfNotEmpty;
@@ -95,8 +93,10 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
           case ValueMetaInterface.TYPE_DATE: schemaField.setType( "DATETIME" ); break;
           case ValueMetaInterface.TYPE_BOOLEAN: schemaField.setType( "BOOLEAN" ); break;
           case ValueMetaInterface.TYPE_NUMBER: schemaField.setType( "FLOAT" ); break;
+          case ValueMetaInterface.TYPE_TIMESTAMP: schemaField.setType( "DATETIME" ); break;
           default:
-            throw new RuntimeException( "Conversion from Kettle value "+valueMeta.toString()+" to BigQuery TableRow isn't supported yet" );
+            schemaField.setType( "STRING" ); break;
+            //throw new RuntimeException( "Conversion from Kettle value "+valueMeta.toString()+" to BigQuery TableRow isn't supported yet" );
         }
         schemaFields.add(schemaField);
       }
@@ -128,11 +128,14 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
         .withSchema( tableSchema )
         .withCreateDisposition( createDisposition )
         .withWriteDisposition( writeDisposition )
+        .withMethod(BigQueryIO.Write.Method.STREAMING_INSERTS)
         .withFormatFunction( formatFunction );
 
+      /*
       if(!Strings.isNullOrEmpty(this.tempPath)){
         bigQueryWrite.withCustomGcsTempLocation(ValueProvider.StaticValueProvider.of(this.tempPath));
       }
+      */
 
 
       // TODO: pass the results along the way at some point

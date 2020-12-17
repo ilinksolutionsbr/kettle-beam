@@ -40,18 +40,18 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public static final String PROJECT_ID = "project_id";
   public static final String DATASET_ID = "dataset_id";
   public static final String TABLE_ID = "table_id";
-  public static final String TEMP_PATH = "temp_path";
   public static final String CREATE_IF_NEEDED = "create_if_needed";
   public static final String TRUNCATE_TABLE = "truncate_table";
   public static final String FAIL_IF_NOT_EMPTY = "fail_if_not_empty";
+  public static final String QUERY = "query";
 
   private String projectId;
   private String datasetId;
   private String tableId;
-  private String tempPath;
   private boolean creatingIfNeeded;
   private boolean truncatingTable;
   private boolean failingIfNotEmpty;
+  private String query;
 
   @Override public void setDefault() {
     creatingIfNeeded=true;
@@ -66,11 +66,11 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   }
 
   @Override public StepInterface getStep( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans ) {
-    return new DummyTrans( stepMeta, stepDataInterface, copyNr, transMeta, trans );
+    return new BeamBQOutput( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
   @Override public StepDataInterface getStepData() {
-    return new DummyTransData();
+    return new BeamBQOutputData();
   }
 
   @Override public String getDialogClassName() {
@@ -82,10 +82,10 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     xml.append( XMLHandler.addTagValue( PROJECT_ID, projectId ) );
     xml.append( XMLHandler.addTagValue( DATASET_ID, datasetId ) );
     xml.append( XMLHandler.addTagValue( TABLE_ID, tableId) );
-    xml.append( XMLHandler.addTagValue( TEMP_PATH, tempPath) );
     xml.append( XMLHandler.addTagValue( CREATE_IF_NEEDED, creatingIfNeeded) );
     xml.append( XMLHandler.addTagValue( TRUNCATE_TABLE, truncatingTable) );
     xml.append( XMLHandler.addTagValue( FAIL_IF_NOT_EMPTY, failingIfNotEmpty) );
+    xml.append( XMLHandler.addTagValue( QUERY, query) );
     return xml.toString();
   }
 
@@ -93,10 +93,10 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     projectId = XMLHandler.getTagValue( stepNode, PROJECT_ID );
     datasetId= XMLHandler.getTagValue( stepNode, DATASET_ID );
     tableId= XMLHandler.getTagValue( stepNode, TABLE_ID);
-    tempPath= XMLHandler.getTagValue( stepNode, TEMP_PATH);
     creatingIfNeeded= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, CREATE_IF_NEEDED) );
     truncatingTable= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, TRUNCATE_TABLE) );
     failingIfNotEmpty= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, FAIL_IF_NOT_EMPTY) );
+    query= XMLHandler.getTagValue( stepNode, QUERY);
   }
 
   /**
@@ -149,23 +149,6 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
 
 
   /**
-   * Gets tempPath
-   *
-   * @return value of tempPath
-   */
-  public String getTempPath() {
-    return tempPath;
-  }
-
-  /**
-   * @param tempPath The tempPath to set
-   */
-  public void setTempPath( String tempPath ) {
-    this.tempPath = tempPath;
-  }
-
-
-  /**
    * Gets creatingIfNeeded
    *
    * @return value of creatingIfNeeded
@@ -211,5 +194,21 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
    */
   public void setFailingIfNotEmpty( boolean failingIfNotEmpty ) {
     this.failingIfNotEmpty = failingIfNotEmpty;
+  }
+
+  /**
+   * Gets query
+   *
+   * @return value of query
+   */
+  public String getQuery() {
+    return query;
+  }
+
+  /**
+   * @param query The query to set
+   */
+  public void setQuery( String query ) {
+    this.query = query;
   }
 }

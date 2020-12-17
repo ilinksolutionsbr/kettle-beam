@@ -1,21 +1,10 @@
 package org.kettle.beam.steps.bq;
 
-import com.google.api.services.bigquery.model.TableReference;
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.Field;
-import com.google.cloud.bigquery.FieldList;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.Schema;
-import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableDefinition;
-import org.apache.commons.lang.StringUtils;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
-import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
@@ -29,8 +18,6 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
-import org.pentaho.di.trans.steps.dummytrans.DummyTrans;
-import org.pentaho.di.trans.steps.dummytrans.DummyTransData;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
@@ -67,19 +54,18 @@ public class BeamBQInputMeta extends BaseStepMeta implements StepMetaInterface {
   }
 
   @Override public StepInterface getStep( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans ) {
-    return new DummyTrans( stepMeta, stepDataInterface, copyNr, transMeta, trans );
+    return new BeamBQInput( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
   @Override public StepDataInterface getStepData() {
-    return new DummyTransData();
+    return new BeamBQInputData();
   }
 
   @Override public String getDialogClassName() {
     return BeamBQInputDialog.class.getName();
   }
 
-  @Override public void getFields( RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore )
-    throws KettleStepException {
+  @Override public void getFields( RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore ) throws KettleStepException {
 
     try {
       for ( BQField field : fields ) {

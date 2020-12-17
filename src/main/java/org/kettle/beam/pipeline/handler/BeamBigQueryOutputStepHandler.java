@@ -4,9 +4,11 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.lang.StringUtils;
 import org.kettle.beam.core.KettleRow;
+import org.kettle.beam.core.transform.BeamBQInputTransform;
 import org.kettle.beam.core.transform.BeamBQOutputTransform;
 import org.kettle.beam.core.transform.BeamOutputTransform;
 import org.kettle.beam.core.util.JsonRowMeta;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.FieldDefinition;
 import org.kettle.beam.metastore.FileDefinition;
@@ -26,41 +28,63 @@ import java.util.Map;
 
 public class BeamBigQueryOutputStepHandler extends BeamBaseStepHandler implements BeamStepHandler {
 
-  public BeamBigQueryOutputStepHandler( BeamJobConfig beamJobConfig, IMetaStore metaStore, TransMeta transMeta, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  private String metaStoreJson;
+  private boolean isGenericStep;
+  private BeamGenericStepHandler genericStepHandler;
+
+  public BeamBigQueryOutputStepHandler( BeamJobConfig beamJobConfig, IMetaStore metaStore, String metaStoreJson, TransMeta transMeta, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     super( beamJobConfig, false, true, metaStore, transMeta, stepPluginClasses, xpPluginClasses );
+    this.metaStoreJson = metaStoreJson;
   }
 
-  @Override public void handleStep( LogChannelInterface log, StepMeta beamOutputStepMeta, Map<String, PCollection<KettleRow>> stepCollectionMap,
+  @Override public void handleStep( LogChannelInterface log, StepMeta stepMeta, Map<String, PCollection<KettleRow>> stepCollectionMap,
                                     Pipeline pipeline, RowMetaInterface rowMeta, List<StepMeta> previousSteps,
                                     PCollection<KettleRow> input  ) throws KettleException {
 
-    BeamBQOutputMeta beamOutputMeta = (BeamBQOutputMeta) beamOutputStepMeta.getStepMetaInterface();
-
-    BeamBQOutputTransform beamOutputTransform = new BeamBQOutputTransform(
-      beamOutputStepMeta.getName(),
-      transMeta.environmentSubstitute( beamOutputMeta.getProjectId() ),
-      transMeta.environmentSubstitute( beamOutputMeta.getDatasetId() ),
-      transMeta.environmentSubstitute( beamOutputMeta.getTableId() ),
-      transMeta.environmentSubstitute( beamOutputMeta.getTempPath() ),
-      beamOutputMeta.isCreatingIfNeeded(),
-      beamOutputMeta.isTruncatingTable(),
-      beamOutputMeta.isFailingIfNotEmpty(),
-      JsonRowMeta.toJson(rowMeta),
-      stepPluginClasses,
-      xpPluginClasses
-    );
-
+    BeamBQOutputMeta beamOutputMeta = (BeamBQOutputMeta) stepMeta.getStepMetaInterface();
     // Which step do we apply this transform to?
     // Ignore info hops until we figure that out.
     //
-    if ( previousSteps.size() > 1 ) {
-      throw new KettleException( "Combining data from multiple steps is not supported yet!" );
+    if (previousSteps.size() > 1) {
+      throw new KettleException("Combining data from multiple steps is not supported yet!");
     }
-    StepMeta previousStep = previousSteps.get( 0 );
+    StepMeta previousStep = previousSteps.get(0);
 
-    // No need to store this, it's PDone.
-    //
-    input.apply( beamOutputTransform );
-    log.logBasic( "Handled step (BQ OUTPUT) : " + beamOutputStepMeta.getName() + ", gets data from " + previousStep.getName() );
+    this.isGenericStep = !Strings.isNullOrEmpty(beamOutputMeta.getQuery());
+
+    if (!this.isGenericStep) {
+      BeamBQOutputTransform beamOutputTransform = new BeamBQOutputTransform(
+              stepMeta.getName(),
+              transMeta.environmentSubstitute(beamOutputMeta.getProjectId()),
+              transMeta.environmentSubstitute(beamOutputMeta.getDatasetId()),
+              transMeta.environmentSubstitute(beamOutputMeta.getTableId()),
+              beamOutputMeta.isCreatingIfNeeded(),
+              beamOutputMeta.isTruncatingTable(),
+              beamOutputMeta.isFailingIfNotEmpty(),
+              JsonRowMeta.toJson(rowMeta),
+              stepPluginClasses,
+              xpPluginClasses
+      );
+      // No need to store this, it's PDone.
+      //
+      input.apply(beamOutputTransform);
+
+    } else {
+      this.getGenericStepHandler().handleStep(log, stepMeta, stepCollectionMap, pipeline, rowMeta, previousSteps, input);
+    }
+
+    log.logBasic("Handled step (BQ OUTPUT) : " + stepMeta.getName() + ", gets data from " + previousStep.getName());
+
   }
+
+  private BeamGenericStepHandler getGenericStepHandler(){
+    if(this.genericStepHandler == null){
+      this.genericStepHandler = new BeamGenericStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses );
+    }
+    return this.genericStepHandler;
+  }
+
+
+
 }
+
