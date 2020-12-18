@@ -83,10 +83,6 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
 
             if(parameters.size() > 0) {
                 Object[] row = this.getRow();
-                if(row == null){
-                    this.setOutputDone();
-                    return false;
-                }
                 Map<String, Tuple<Object, Integer>> dataSet = this.getDateSet(row);
                 this.setParameters(preparedStatement, parameters, dataSet);
             }
@@ -172,6 +168,9 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
                     value = null;
                 }
                 if(value != null){
+                    try{
+                        value = Integer.parseInt(value.toString());
+                    }catch (Exception ex){}
                     preparedStatement.setObject(i, value);
                 }else{
                     preparedStatement.setNull(i, Types.VARCHAR);

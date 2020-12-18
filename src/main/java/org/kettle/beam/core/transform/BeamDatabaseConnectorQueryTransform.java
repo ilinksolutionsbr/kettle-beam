@@ -148,6 +148,9 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
                     value = null;
                 }
                 if(value != null){
+                    try{
+                        value = Integer.parseInt(value.toString());
+                    }catch (Exception ex){}
                     preparedStatement.setObject(i, value);
                 }else{
                     preparedStatement.setNull(i, Types.VARCHAR);
