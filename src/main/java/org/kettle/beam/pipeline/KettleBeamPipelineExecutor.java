@@ -423,6 +423,14 @@ public class KettleBeamPipelineExecutor {
     String gcpTemplateLocation = space.environmentSubstitute(config.getGcpTemplateLocation());
     if(!Strings.isNullOrEmpty(gcpTemplateLocation)){options.setTemplateLocation(gcpTemplateLocation);}
 
+    String gcpNetwork = space.environmentSubstitute(config.getGcpNetwork());
+    String gcpSubNetwork = space.environmentSubstitute(config.getGcpSubNetwork());
+    if(!Strings.isNullOrEmpty(gcpNetwork) && !Strings.isNullOrEmpty(gcpSubNetwork)){
+      options.setNetwork(gcpNetwork);
+      options.setSubnetwork(gcpSubNetwork);
+      options.setUsePublicIps(false);
+    }
+
     if ( StringUtils.isNotEmpty( config.getGcpInitialNumberOfWorkers() ) ) {
       int numWorkers = Const.toInt( space.environmentSubstitute( config.getGcpInitialNumberOfWorkers() ), -1 );
       if ( numWorkers >= 0 ) {

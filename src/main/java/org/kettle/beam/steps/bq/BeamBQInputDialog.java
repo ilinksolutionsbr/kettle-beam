@@ -24,7 +24,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.fn.BQSchemaAndRecordToKettleFn;
+import org.kettle.beam.perspective.BeamHelper;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.row.RowMeta;
@@ -277,7 +279,7 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
       }
 
     } catch ( Exception e ) {
-      new ErrorDialog( shell, "Error", "Error getting BQ fields", e );
+      new KettleErrorDialog( shell, "Error", "Error getting BQ fields", e );
     }
   }
 

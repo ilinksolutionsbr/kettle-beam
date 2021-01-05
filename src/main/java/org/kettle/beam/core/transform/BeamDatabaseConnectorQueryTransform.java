@@ -14,6 +14,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
+import org.kettle.beam.core.coder.KettleRowCoder;
 import org.kettle.beam.core.util.JsonRowMeta;
 import org.kettle.beam.steps.database.FieldInfo;
 import org.pentaho.di.core.exception.KettleValueException;
@@ -124,7 +125,9 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
                             return BeamDatabaseConnectorQueryTransform.this.parse(resultSet);
                         }
                     })
-                    .withCoder(SerializableCoder.of(KettleRow.class))
+                    .withCoder(new KettleRowCoder())
+                    //.withCoder(SerializableCoder.of(KettleRow.class))
+
             );
 
             return output;

@@ -26,6 +26,8 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.kettle.beam.core.KettleErrorDialog;
+import org.kettle.beam.perspective.BeamHelper;
 import org.kettle.beam.pipeline.fatjar.FatJarBuilder;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
@@ -98,6 +100,8 @@ public class BeamJobConfigDialog {
   private TextVar wGcpAppName;
   private TextVar wGcpStagingLocation;
   private TextVar wGcpTemplateLocation;
+  private TextVar wGcpNetwork;
+  private TextVar wGcpSubNetwork;
   private TextVar wGcpInitialNumberOfWorkers;
   private TextVar wGcpMaximumNumberOfWorkers;
   private TextVar wGcpAutoScalingAlgorithm;
@@ -225,6 +229,8 @@ public class BeamJobConfigDialog {
     wGcpAppName.addSelectionListener( selAdapter );
     wGcpStagingLocation.addSelectionListener( selAdapter );
     wGcpTemplateLocation.addSelectionListener( selAdapter );
+    wGcpNetwork.addSelectionListener( selAdapter );
+    wGcpSubNetwork.addSelectionListener( selAdapter );
     wGcpInitialNumberOfWorkers.addSelectionListener( selAdapter );
     wGcpMaximumNumberOfWorkers.addSelectionListener( selAdapter );
     wGcpStreaming.addSelectionListener( selAdapter );
@@ -631,7 +637,7 @@ public class BeamJobConfigDialog {
       wFatJar.setText( filename );
 
     } catch ( Exception e ) {
-      new ErrorDialog( shell, "Error", "Error building fat jar: " + e.getMessage(), e );
+      new KettleErrorDialog( shell, "Error", "Error building fat jar:", e );
     }
   }
 
@@ -656,7 +662,7 @@ public class BeamJobConfigDialog {
     try {
       return FatJarBuilder.findPluginClasses( pluginClassName, jobConfig.getPluginsToStage() );
     } catch ( Exception e ) {
-      new ErrorDialog( shell, "Error", "Error find plugin classes of annotation type '" + pluginClassName, e );
+      new KettleErrorDialog( shell, "Error", "Error find plugin classes of annotation type '" + pluginClassName, e );
       return null;
     }
   }
@@ -788,6 +794,46 @@ public class BeamJobConfigDialog {
     wGcpTemplateLocation.setLayoutData( fdGcpTemplateLocation );
     lastControl = wGcpTemplateLocation;
 
+
+
+
+    // Network
+    //
+    Label wlGcpNetwork = new Label( wDataflowComp, SWT.RIGHT );
+    props.setLook( wlGcpNetwork );
+    wlGcpNetwork.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.GcpNetwork.Label" ) );
+    FormData fdlGcpNetwork = new FormData();
+    fdlGcpNetwork.top = new FormAttachment( lastControl, margin );
+    fdlGcpNetwork.left = new FormAttachment( 0, -margin ); // First one in the left top corner
+    fdlGcpNetwork.right = new FormAttachment( middle, -margin );
+    wlGcpNetwork.setLayoutData( fdlGcpNetwork );
+    wGcpNetwork = new TextVar( space, wDataflowComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wGcpNetwork );
+    FormData fdGcpNetwork = new FormData();
+    fdGcpNetwork.top = new FormAttachment( wlGcpNetwork, 0, SWT.CENTER );
+    fdGcpNetwork.left = new FormAttachment( middle, 0 ); // To the right of the label
+    fdGcpNetwork.right = new FormAttachment( 95, 0 );
+    wGcpNetwork.setLayoutData( fdGcpNetwork );
+    lastControl = wGcpNetwork;
+
+    // SubNetwork
+    //
+    Label wlGcpSubNetwork = new Label( wDataflowComp, SWT.RIGHT );
+    props.setLook( wlGcpSubNetwork );
+    wlGcpSubNetwork.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.GcpSubNetwork.Label" ) );
+    FormData fdlGcpSubNetwork = new FormData();
+    fdlGcpSubNetwork.top = new FormAttachment( lastControl, margin );
+    fdlGcpSubNetwork.left = new FormAttachment( 0, -margin ); // First one in the left top corner
+    fdlGcpSubNetwork.right = new FormAttachment( middle, -margin );
+    wlGcpSubNetwork.setLayoutData( fdlGcpSubNetwork );
+    wGcpSubNetwork = new TextVar( space, wDataflowComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wGcpSubNetwork );
+    FormData fdGcpSubNetwork = new FormData();
+    fdGcpSubNetwork.top = new FormAttachment( wlGcpSubNetwork, 0, SWT.CENTER );
+    fdGcpSubNetwork.left = new FormAttachment( middle, 0 ); // To the right of the label
+    fdGcpSubNetwork.right = new FormAttachment( 95, 0 );
+    wGcpSubNetwork.setLayoutData( fdGcpSubNetwork );
+    lastControl = wGcpSubNetwork;
 
 
     // Initial number of workers
@@ -1684,6 +1730,9 @@ public class BeamJobConfigDialog {
     wGcpAppName.setText( Const.NVL( config.getGcpAppName(), "" ) );
     wGcpStagingLocation.setText( Const.NVL( config.getGcpStagingLocation(), "" ) );
     wGcpTemplateLocation.setText( Const.NVL( config.getGcpTemplateLocation(), "" ) );
+    wGcpNetwork.setText( Const.NVL( config.getGcpNetwork(), "" ) );
+    wGcpSubNetwork.setText( Const.NVL( config.getGcpSubNetwork(), "" ) );
+
     String workerCode = config.getGcpWorkerMachineType();
     String workerDescription = "";
     if ( StringUtils.isNotEmpty( workerCode ) ) {
@@ -1801,6 +1850,8 @@ public class BeamJobConfigDialog {
     cfg.setGcpAppName( wGcpAppName.getText() );
     cfg.setGcpStagingLocation( wGcpStagingLocation.getText() );
     cfg.setGcpTemplateLocation( wGcpTemplateLocation.getText() );
+    cfg.setGcpNetwork( wGcpNetwork.getText() );
+    cfg.setGcpSubNetwork( wGcpSubNetwork.getText() );
     cfg.setGcpInitialNumberOfWorkers( wGcpInitialNumberOfWorkers.getText() );
     cfg.setGcpMaximumNumberOfWokers( wGcpMaximumNumberOfWorkers.getText() );
     cfg.setGcpStreaming( wGcpStreaming.getSelection() );

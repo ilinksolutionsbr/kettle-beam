@@ -66,6 +66,12 @@ public class BeamJobConfig {
   private String gcpTemplateLocation;
 
   @MetaStoreAttribute
+  private String gcpNetwork;
+
+  @MetaStoreAttribute
+  private String gcpSubNetwork;
+
+  @MetaStoreAttribute
   private String gcpInitialNumberOfWorkers;
 
   @MetaStoreAttribute
@@ -342,6 +348,39 @@ public class BeamJobConfig {
    */
   public void setGcpTemplateLocation( String gcpTemplateLocation ) {
     this.gcpTemplateLocation = gcpTemplateLocation;
+  }
+
+  /**
+   * Gets gcpNetwork
+   *
+   * @return value of gcpNetwork
+   */
+  public String getGcpNetwork() {
+    return gcpNetwork;
+  }
+
+  /**
+   * @param gcpNetwork The gcpNetwork to set
+   */
+  public void setGcpNetwork( String gcpNetwork ) {
+    this.gcpNetwork = gcpNetwork;
+  }
+
+
+  /**
+   * Gets gcpSubNetwork
+   *
+   * @return value of gcpSubNetwork
+   */
+  public String getGcpSubNetwork() {
+    return gcpSubNetwork;
+  }
+
+  /**
+   * @param gcpSubNetwork The gcpSubNetwork to set
+   */
+  public void setGcpSubNetwork( String gcpSubNetwork ) {
+    this.gcpSubNetwork = gcpSubNetwork;
   }
 
   /**

@@ -50,6 +50,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.BeamJobConfigDialog;
@@ -167,7 +168,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
             } catch ( Exception e ) {
               spoon.getDisplay().asyncExec( new Runnable() {
                 @Override public void run() {
-                  new ErrorDialog( spoon.getShell(), "Error", "There was an error building or executing the pipeline. Use the 'Details' button for more information: "+e.getMessage(), e );
+                  new KettleErrorDialog( spoon.getShell(), "Error", "There was an error building or executing the pipeline. Use the 'Details' button for more information:", e );
                 }
               } );
             }
@@ -196,10 +197,10 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
 
       }
     } catch ( Exception e ) {
-      new ErrorDialog( spoon.getShell(),
+      new KettleErrorDialog( spoon.getShell(),
         BaseMessages.getString( PKG, "BeamHelper.ErrorRunningTransOnBeam.Title" ),
         BaseMessages.getString( PKG, "BeamHelper.ErrorRunningTransOnBeam.Message" ),
-        e
+         e
       );
     }
 
@@ -248,7 +249,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
             ok = true;
           }
         } catch ( Exception exception ) {
-          new ErrorDialog( spoon.getShell(),
+          new KettleErrorDialog( spoon.getShell(),
             BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingDefinition.Title" ),
             BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingDefinition.Message" ),
             exception );
@@ -284,16 +285,16 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
           try {
             factory.saveElement( fileDefinition );
           } catch ( Exception exception ) {
-            new ErrorDialog( spoon.getShell(),
+            new KettleErrorDialog( spoon.getShell(),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingDefinition.Title" ),
-              BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingDefinition.Message" ),
+              BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingDefinition.Message" ) ,
               exception );
             return;
           }
         }
       }
     } catch ( Exception e ) {
-      new ErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingDefinition.Message" ), e );
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingDefinition.Message" ), e );
     }
   }
 
@@ -320,7 +321,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
           try {
             factory.deleteElement( choice );
           } catch ( Exception exception ) {
-            new ErrorDialog( spoon.getShell(),
+            new KettleErrorDialog( spoon.getShell(),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingDefinition.Title" ),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingDefinition.Message", choice ),
               exception );
@@ -328,7 +329,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         }
       }
     } catch ( Exception e ) {
-      new ErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingDefinition.Message" ), e );
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingDefinition.Message" ), e );
     }
   }
 
@@ -359,7 +360,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
             ok = true;
           }
         } catch ( Exception exception ) {
-          new ErrorDialog( spoon.getShell(),
+          new KettleErrorDialog( spoon.getShell(),
             BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingJobConfig.Title" ),
             BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingJobConfig.Message" ),
             exception );
@@ -395,7 +396,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
           try {
             factory.saveElement( beamJobConfig );
           } catch ( Exception exception ) {
-            new ErrorDialog( spoon.getShell(),
+            new KettleErrorDialog( spoon.getShell(),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingJobConfig.Title" ),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorSavingJobConfig.Message" ),
               exception );
@@ -404,7 +405,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         }
       }
     } catch ( Exception e ) {
-      new ErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), e );
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), e );
     }
   }
 
@@ -431,7 +432,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
           try {
             factory.deleteElement( choice );
           } catch ( Exception exception ) {
-            new ErrorDialog( spoon.getShell(),
+            new KettleErrorDialog( spoon.getShell(),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingJobConfig.Title" ),
               BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingJobConfig.Message", choice ),
               exception );
@@ -439,7 +440,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         }
       }
     } catch ( Exception e ) {
-      new ErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingJobConfig.Message" ), e );
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.Error.ErrorDeletingJobConfig.Message" ), e );
     }
   }
 
@@ -529,7 +530,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         box.open();
       }
     } catch(Exception e) {
-      new ErrorDialog( shell, "Error", "Error creating fat jar", e );
+      new KettleErrorDialog( shell, "Error", "Error creating fat jar", e );
     }
 
   }
@@ -552,7 +553,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       box.open();
 
     } catch(Exception e) {
-      new ErrorDialog( shell, "Error", "Error exporting metastore json", e );
+      new KettleErrorDialog( shell, "Error", "Error exporting metastore json", e );
     }
 
   }

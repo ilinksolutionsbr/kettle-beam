@@ -5,7 +5,9 @@ import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResult;
 import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.metrics.MetricsFilter;
+import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.metastore.BeamJobConfig;
+import org.kettle.beam.perspective.BeamHelper;
 import org.kettle.beam.pipeline.KettleBeamPipelineExecutor;
 import org.pentaho.di.ExecutionConfiguration;
 import org.pentaho.di.core.exception.KettleException;
@@ -171,7 +173,7 @@ public class RunBeamTransExecutionPoint implements ExtensionPointInterface {
           }
         }
       } catch ( Exception e ) {
-        spoon.getDisplay().asyncExec( () -> new ErrorDialog( spoon.getShell(), "Error", "There was an error building or executing the pipeline", e ) );
+        spoon.getDisplay().asyncExec( () -> new KettleErrorDialog( spoon.getShell(), "Error", "There was an error building or executing the pipeline", e ) );
       }
     };
 
