@@ -52,6 +52,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
     private TextVar txtPassword;
     private Combo cboQueryType;
     private List lstVariables;
+    private Label lblQuery;
     private TextVar txtQuery;
     private TableView tblFields;
     private Label lblFields;
@@ -220,15 +221,11 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         formData.top = new FormAttachment( lblQueryType, 0, SWT.CENTER );
         formData.right = new FormAttachment( 100, 0 );
         this.cboQueryType.setLayoutData(formData);
-        this.cboQueryType.addModifyListener( e -> {
-            Boolean visible = BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT.equalsIgnoreCase(this.cboQueryType.getText());
-            this.tblFields.setVisible(visible);
-            this.lblFields.setVisible(visible);
-        });
+        this.cboQueryType.addModifyListener(this.cboQueryType_Selected());
         lastControl = this.cboQueryType;
 
 
-        Label lblQuery = new Label( shell, SWT.LEFT );
+        lblQuery = new Label( shell, SWT.LEFT );
         lblQuery.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.Query" ) );
         props.setLook( lblQuery );
         formData = new FormData();
@@ -396,6 +393,39 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         this.wStepname.setFocus();
     }
 
+    private ModifyListener cboQueryType_Selected(){
+        return modifyEvent -> {
+            Boolean visible = BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT.equalsIgnoreCase(cboQueryType.getText());
+            tblFields.setVisible(visible);
+            lblFields.setVisible(visible);
+
+            FormData formData;
+            formData = new FormData();
+            formData.left = new FormAttachment( 0, 0 );
+            formData.top = new FormAttachment( lblQuery, margin );
+            if(!visible){
+                formData.bottom = new FormAttachment( wOK, -2*margin);
+            }else{
+                formData.bottom = new FormAttachment( lblQuery, 250);
+            }
+            formData.width = 120;
+            lstVariables.setLayoutData(formData);
+
+            formData = new FormData();
+            formData.left = new FormAttachment( lstVariables, 0 );
+            formData.top = new FormAttachment( lblQuery, margin );
+            formData.right = new FormAttachment( 100, 0 );
+            if(!visible){
+                formData.bottom = new FormAttachment( wOK, -2*margin);
+            }else{
+                formData.bottom = new FormAttachment( lblQuery, 250);
+            }
+            txtQuery.setLayoutData(formData);
+
+            txtQuery.getParent().layout();
+        };
+    }
+
     private void cancel() {
         this.stepname = null;
         this.metadata.setChanged(this.changed);
@@ -405,41 +435,39 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
     private void ok() {
         try {
             if (Utils.isEmpty(wStepname.getText())) {return;}
-            this.getInfo(this.metadata);
-
-            if (Strings.isNullOrEmpty(this.metadata.getDatabase())) {throw new Exception("Banco de dados não informado.");}
-            if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(this.metadata.getDatabase())) {throw new Exception("Banco de dados inválido.");}
-            if (Strings.isNullOrEmpty(this.metadata.getConnectionString())) {throw new Exception("URL de conexão não informado.");}
-            if (Strings.isNullOrEmpty(this.metadata.getUsername())) {throw new Exception("Usuário não informado.");}
-            if (Strings.isNullOrEmpty(this.metadata.getPassword())) {throw new Exception("Senha não informado.");}
-            if (Strings.isNullOrEmpty(this.metadata.getQueryType())) {throw new Exception("Tipo de query não informado.");}
-            if (!BeamDatabaseConnectorHelper.getInstance().getQueryTypes().containsKey(this.metadata.getQueryType())) {throw new Exception("Tipo de query inválido.");}
-            if (Strings.isNullOrEmpty(this.metadata.getQuery())) {throw new Exception("Query não informado.");}
-
-            this.dispose();
+            if (Strings.isNullOrEmpty(cboDatabase.getText())) {throw new Exception("Banco de dados nao informado.");}
+            if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(cboDatabase.getText())) {throw new Exception("Banco de dados invalido.");}
+            if (Strings.isNullOrEmpty(txtConnectionString.getText())) {throw new Exception("URL de conexão nao informado.");}
+            if (Strings.isNullOrEmpty(txtUsername.getText())) {throw new Exception("Usuario nao informado.");}
+            if (Strings.isNullOrEmpty(txtPassword.getText())) {throw new Exception("Senha nao informado.");}
+            if (Strings.isNullOrEmpty(cboQueryType.getText())) {throw new Exception("Tipo de query nao informado.");}
+            if (!BeamDatabaseConnectorHelper.getInstance().getQueryTypes().containsKey(cboQueryType.getText())) {throw new Exception("Tipo de query invalido.");}
+            if (Strings.isNullOrEmpty(txtQuery.getText())) {throw new Exception("Query nao informado.");}
+            getInfo(metadata);
+            dispose();
 
         }catch (Exception ex){
-            SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+            SimpleMessageDialog.openWarning(shell, "Aviso", ex.getMessage());
 
         }
     }
 
     private void getInfo(BeamDatabaseConnectorMeta metadata) {
-        this.stepname = this.wStepname.getText();
-        metadata.setDatabase(this.cboDatabase.getText());
-        metadata.setConnectionString(this.txtConnectionString.getText());
-        metadata.setUsername(this.txtUsername.getText());
-        metadata.setPassword(this.txtPassword.getText());
-        metadata.setQueryType(this.cboQueryType.getText());
-        metadata.setQuery(this.txtQuery.getText());
+        stepname = wStepname.getText();
+        metadata.setDatabase(cboDatabase.getText());
+        metadata.setConnectionString(txtConnectionString.getText());
+        metadata.setUsername(txtUsername.getText());
+        metadata.setPassword(txtPassword.getText());
+        metadata.setQueryType(cboQueryType.getText());
+        metadata.setQuery(txtQuery.getText());
         metadata.getFields().clear();
 
-        if(BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT.equalsIgnoreCase(this.cboQueryType.getText())) {
+        if(BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT.equalsIgnoreCase(cboQueryType.getText())) {
             String column;
             String variable;
             String type;
-            for (int i = 0; i < this.tblFields.nrNonEmpty(); i++) {
-                TableItem item = this.tblFields.getNonEmpty(i);
+            for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
+                TableItem item = tblFields.getNonEmpty(i);
                 column = item.getText(1);
                 if(!Strings.isNullOrEmpty(column)) {
                     variable = item.getText(2);

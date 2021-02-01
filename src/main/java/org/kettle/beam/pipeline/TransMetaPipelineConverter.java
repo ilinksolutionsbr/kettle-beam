@@ -15,6 +15,7 @@ import org.apache.commons.vfs2.FileObject;
 import org.kettle.beam.core.BeamDefaults;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.coder.KettleRowCoder;
+import org.kettle.beam.core.coder.KettleRowSimpleCoder;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
 import org.kettle.beam.core.util.KettleBeamUtil;
 import org.kettle.beam.metastore.BeamJobConfig;
@@ -176,7 +177,7 @@ public class TransMetaPipelineConverter {
     pipelineOptions.setRunner( runnerClass );
     Pipeline pipeline = Pipeline.create( pipelineOptions );
 
-    pipeline.getCoderRegistry().registerCoderForClass( KettleRow.class, new KettleRowCoder() );
+    pipeline.getCoderRegistry().registerCoderForClass( KettleRow.class, new KettleRowSimpleCoder() );
 
     log.logBasic( "Created pipeline job with name '" + pipelineOptions.getJobName() + "'" );
 

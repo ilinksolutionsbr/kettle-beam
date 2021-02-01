@@ -1,6 +1,7 @@
 
 package org.kettle.beam.steps.window;
 
+import org.apache.directory.api.util.Strings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -22,6 +23,7 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
@@ -179,13 +181,15 @@ public class BeamTimestampDialog extends BaseStepDialog implements StepDialogInt
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try{
+      if ( Utils.isEmpty( wStepname.getText() ) ) {throw new Exception("Nome do step nao informado.");}
+      getInfo( input );
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamTimestampMeta in ) {

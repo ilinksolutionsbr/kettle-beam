@@ -9,6 +9,7 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
+import org.pentaho.di.core.row.value.ValueMetaPluginType;
 
 public class JsonRowMeta {
 
@@ -56,7 +57,12 @@ public class JsonRowMeta {
       long length = (long)jValue.get("length");
       long precision = (long)jValue.get("precision");
       String conversionMask = (String) jValue.get("conversionMask");
-      ValueMetaInterface valueMeta = ValueMetaFactory.createValueMeta( name, (int)type, (int)length, (int)precision );
+      ValueMetaInterface valueMeta = null;
+      try {
+        valueMeta = ValueMetaFactory.createValueMeta(name, (int) type, (int) length, (int) precision);
+      }catch (KettlePluginException ex){
+        throw new KettlePluginException("Erro ao criar o ValueMetaInterface: name: " + name + "; type: " + type + "; length: " + length + "; precision: " + precision);
+      }
       valueMeta.setConversionMask( conversionMask );
       rowMeta.addValueMeta( valueMeta );
     }

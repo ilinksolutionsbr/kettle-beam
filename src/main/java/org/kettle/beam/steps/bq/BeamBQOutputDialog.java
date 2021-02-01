@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.kettle.beam.core.util.Strings;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
@@ -27,6 +28,7 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -43,10 +45,12 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
   private TextVar wProjectId;
   private TextVar wDatasetId;
   private TextVar wTableId;
-    private Button wCreateIfNeeded;
+  private TextVar wTempLocation;
+  private Button wCreateIfNeeded;
   private Button wTruncateTable;
   private Button wFailIfNotEmpty;
   private TextVar wQuery;
+
 
 
   public BeamBQOutputDialog( Shell parent, Object in, TransMeta transMeta, String sname ) {
@@ -144,6 +148,23 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wTableId.setLayoutData( fdTableId );
     lastControl = wTableId;
 
+    Label wlTempLocation = new Label( shell, SWT.RIGHT );
+    wlTempLocation.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.TempLocation" ) );
+    props.setLook( wlTempLocation );
+    FormData fdlTempLocation = new FormData();
+    fdlTempLocation.left = new FormAttachment( 0, 0 );
+    fdlTempLocation.top = new FormAttachment( lastControl, margin );
+    fdlTempLocation.right = new FormAttachment( middle, -margin );
+    wlTempLocation.setLayoutData( fdlTempLocation );
+    wTempLocation = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wTempLocation );
+    FormData fdTempLocation = new FormData();
+    fdTempLocation.left = new FormAttachment( middle, 0 );
+    fdTempLocation.top = new FormAttachment( wlTempLocation, 0, SWT.CENTER );
+    fdTempLocation.right = new FormAttachment( 100, 0 );
+    wTempLocation.setLayoutData( fdTempLocation );
+    lastControl = wTempLocation;
+
     Label wlCreateIfNeeded = new Label( shell, SWT.RIGHT );
     wlCreateIfNeeded.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.CreateIfNeeded" ) );
     props.setLook( wlCreateIfNeeded );
@@ -195,6 +216,14 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wFailIfNotEmpty.setLayoutData( fdFailIfNotEmpty );
     lastControl = wFailIfNotEmpty;
 
+
+    wOK = new Button( shell, SWT.PUSH );
+    wOK.setText( BaseMessages.getString( PKG, "System.Button.OK" ) );
+    wCancel = new Button( shell, SWT.PUSH );
+    wCancel.setText( BaseMessages.getString( PKG, "System.Button.Cancel" ) );
+    this.setButtonPositions( new Button[] { this.wOK, this.wCancel }, this.margin, null );
+
+
     Label wlQuery = new Label( shell, SWT.LEFT );
     wlQuery.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.Query" ) );
     props.setLook( wlQuery );
@@ -209,18 +238,12 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     fdQuery.left = new FormAttachment( 0, 0 );
     fdQuery.top = new FormAttachment( wlQuery, margin );
     fdQuery.right = new FormAttachment( 100, 0 );
-    fdQuery.bottom = new FormAttachment( wlQuery, 250);
+    fdQuery.bottom = new FormAttachment( wOK, -2*margin);
     wQuery.setLayoutData( fdQuery );
     lastControl = wQuery;
 
 
-    wOK = new Button( shell, SWT.PUSH );
-    wOK.setText( BaseMessages.getString( PKG, "System.Button.OK" ) );
 
-    wCancel = new Button( shell, SWT.PUSH );
-    wCancel.setText( BaseMessages.getString( PKG, "System.Button.Cancel" ) );
-
-    setButtonPositions( new Button[] { wOK, wCancel }, margin, lastControl );
 
     // Add listeners
     lsOK = new Listener() {
@@ -278,6 +301,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wProjectId.setText(Const.NVL(input.getProjectId(), ""));
     wDatasetId.setText(Const.NVL(input.getDatasetId(), ""));
     wTableId.setText(Const.NVL(input.getTableId(), ""));
+    wTempLocation.setText(Const.NVL(input.getTempLocation(), ""));
     wCreateIfNeeded.setSelection( input.isCreatingIfNeeded() );
     wTruncateTable.setSelection( input.isTruncatingTable() );
     wFailIfNotEmpty.setSelection( input.isFailingIfNotEmpty() );
@@ -293,13 +317,18 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try {
+      if (Utils.isEmpty(wStepname.getText())) {return;}
+      if (Strings.isNullOrEmpty(wProjectId.getText()) ) {throw new Exception("Projeto nao informado.");}
+      if (Strings.isNullOrEmpty(wDatasetId.getText()) ) {throw new Exception("DataSet nao informado.");}
+      if (Strings.isNullOrEmpty(wTableId.getText()) ) {throw new Exception("Tabela nao informada.");}
+      getInfo(input);
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamBQOutputMeta in ) {
@@ -308,6 +337,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     in.setProjectId( wProjectId.getText() );
     in.setDatasetId( wDatasetId.getText() );
     in.setTableId( wTableId.getText() );
+    in.setTempLocation( wTempLocation.getText() );
     in.setCreatingIfNeeded( wCreateIfNeeded.getSelection() );
     in.setTruncatingTable( wTruncateTable.getSelection() );
     in.setFailingIfNotEmpty( wFailIfNotEmpty.getSelection() );

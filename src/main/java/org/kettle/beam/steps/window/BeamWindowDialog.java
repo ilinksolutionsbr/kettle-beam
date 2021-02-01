@@ -15,12 +15,15 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.BeamDefaults;
+import org.kettle.beam.core.util.Numeric;
+import org.kettle.beam.core.util.Strings;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
@@ -252,13 +255,24 @@ public class BeamWindowDialog extends BaseStepDialog implements StepDialogInterf
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try{
+      if ( Utils.isEmpty( wStepname.getText() ) ) {throw new Exception("Nome do step nao informado.");}
+      if (Strings.isNullOrEmpty(wWindowType.getText()) ) {throw new Exception("Tipo nao informado.");}
+      if (!Numeric.isInteger(wDuration.getText()) ) {throw new Exception("Tempo de duracao nao informado, ou informado incorretamente.");}
+      if (!Numeric.isInteger(wEvery.getText()) ) {throw new Exception("Tempo de nova janela nao informado, ou informado incorretamente.");}
+      if (Strings.isNullOrEmpty(wStartTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Inicio' nao informado.");}
+      if (Strings.isNullOrEmpty(wEndTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Fim' nao informado.");}
+      if (Strings.isNullOrEmpty(wMaxTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Total' nao informado.");}
+      if (Numeric.isNumeric(wStartTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Inicio' nao pode ser numerico.");}
+      if (Numeric.isNumeric(wEndTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Fim' nao pode ser numerico.");}
+      if (Numeric.isNumeric(wMaxTimeField.getText()) ) {throw new Exception("Nome do campo 'Tempo Total' nao pode ser numerico.");}
+      getInfo( input );
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamWindowMeta in ) {

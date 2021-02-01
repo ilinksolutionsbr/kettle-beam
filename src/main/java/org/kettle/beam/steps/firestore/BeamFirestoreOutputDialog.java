@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.kettle.beam.core.BeamDefaults;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.core.util.Web;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
@@ -20,6 +21,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
@@ -257,9 +259,19 @@ public class BeamFirestoreOutputDialog extends BaseStepDialog implements StepDia
      * Botão de aceite.
      */
     private void ok() {
-        if (Utils.isEmpty(this.wStepname.getText())) {return;}
-        this.getInfo(this.output);
-        this.dispose();
+        try {
+            if (Utils.isEmpty(wStepname.getText())) {return;}
+            getInfo(output);
+            if (Strings.isNullOrEmpty(wProjectId.getText()) ) {throw new Exception("Projeto nao informado.");}
+            if (Strings.isNullOrEmpty(wKind.getText()) ) {throw new Exception("Kind nao informado.");}
+            if (Strings.isNullOrEmpty(wKeyField.getText()) ) {throw new Exception("Campo Chave nao informado.");}
+            if (Strings.isNullOrEmpty(wJsonField.getText()) ) {throw new Exception("Campo JSON nao informado.");}
+            dispose();
+
+        }catch (Exception ex){
+            SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
+        }
     }
 
     /**

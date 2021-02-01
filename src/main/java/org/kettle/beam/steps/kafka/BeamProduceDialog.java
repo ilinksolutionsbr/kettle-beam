@@ -13,12 +13,14 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.kettle.beam.core.util.Strings;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
@@ -208,13 +210,19 @@ public class BeamProduceDialog extends BaseStepDialog implements StepDialogInter
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try {
+      if (Utils.isEmpty(wStepname.getText())) {return;}
+      if (Strings.isNullOrEmpty(wBootstrapServers.getText()) ) {throw new Exception("Servidores nao informados.");}
+      if (Strings.isNullOrEmpty(wTopic.getText()) ) {throw new Exception("Topico nao informado.");}
+      if (Strings.isNullOrEmpty(wKeyField.getText()) ) {throw new Exception("Campo Chave nao informado.");}
+      if (Strings.isNullOrEmpty(wMessageField.getText()) ) {throw new Exception("Campo Mensagem nao informado.");}
+      getInfo(input);
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamProduceMeta in ) {

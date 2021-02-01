@@ -24,4 +24,20 @@ public class DateTime {
         return calendar;
     }
 
+    public static String toString(Date date, String pattern){
+        if(date == null || Strings.isNullOrEmpty(pattern)){return null;}
+        SimpleDateFormat formatter = new SimpleDateFormat(pattern);
+        return formatter.format(date);
+    }
+
+    public static Date toDate(String value, String pattern) {
+        Date date = null;
+        try {
+            if (Strings.isNullOrEmpty(value) || Strings.isNullOrEmpty(pattern)) {return null;}
+            SimpleDateFormat formatter = new SimpleDateFormat(pattern);
+            date = formatter.parse(value);
+        }catch (Exception ex){}
+        return date;
+    }
+
 }

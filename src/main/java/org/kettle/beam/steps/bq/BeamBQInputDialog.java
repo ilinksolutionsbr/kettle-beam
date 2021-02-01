@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.fn.BQSchemaAndRecordToKettleFn;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.perspective.BeamHelper;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
@@ -39,6 +40,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -316,13 +318,18 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try {
+      if (Utils.isEmpty(wStepname.getText())) {return;}
+      if (Strings.isNullOrEmpty(wProjectId.getText()) ) {throw new Exception("Projeto nao informado.");}
+      if (Strings.isNullOrEmpty(wDatasetId.getText()) ) {throw new Exception("DataSet nao informado.");}
+      if (Strings.isNullOrEmpty(wTableId.getText()) ) {throw new Exception("Tabela nao informada.");}
+      getInfo(input);
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamBQInputMeta in ) {

@@ -52,6 +52,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   private boolean truncatingTable;
   private boolean failingIfNotEmpty;
   private String query;
+  private String tempLocation;
 
   @Override public void setDefault() {
     creatingIfNeeded=true;
@@ -211,4 +212,21 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public void setQuery( String query ) {
     this.query = query;
   }
+
+  /**
+   * Gets tempLocation
+   *
+   * @return value of tempLocation
+   */
+  public String getTempLocation() {
+    return tempLocation;
+  }
+
+  /**
+   * @param tempLocation The tempLocation to set
+   */
+  public void setTempLocation( String tempLocation ) {
+    this.tempLocation = tempLocation;
+  }
+
 }

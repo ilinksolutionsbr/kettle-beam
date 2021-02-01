@@ -100,14 +100,8 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
                                     .withUsername(this.username)
                                     .withPassword(this.password))
                     .withStatement(this.query)
-                    .withPreparedStatementSetter(new JdbcIO.PreparedStatementSetter<KettleRow>() {
-                        private RowMetaInterface rowMeta;
-                        @Override
-                        public void setParameters(KettleRow element, PreparedStatement preparedStatement) throws Exception {
-                            if(this.rowMeta == null){this.rowMeta = JsonRowMeta.fromJson(BeamDatabaseConnectorUpdateTransform.this.rowMetaJson);}
-                            numUpdate.inc();
-                            BeamDatabaseConnectorUpdateTransform.this.setPreparedStatement(this.rowMeta, element, preparedStatement);
-                        }
+                    .withPreparedStatementSetter((element, preparedStatement) -> {
+                        BeamDatabaseConnectorUpdateTransform.this.setPreparedStatement(element, preparedStatement);
                     }));
 
         } catch ( Exception e ) {
@@ -117,8 +111,12 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
         }
 
     }
-
-    private void setPreparedStatement(RowMetaInterface rowMeta, KettleRow kettleRow, PreparedStatement preparedStatement) throws Exception {
+    private RowMetaInterface rowMeta;
+    private void setPreparedStatement(KettleRow kettleRow, PreparedStatement preparedStatement) throws Exception {
+        BeamKettle.init(stepPluginClasses, xpPluginClasses);
+        if(rowMeta == null){
+            rowMeta = JsonRowMeta.fromJson(this.rowMetaJson);
+        }
         Map<String, Tuple<Object, Integer>> dataSet = this.getDateSet(rowMeta, kettleRow.getRow());
         Object value;
         Tuple<Object, Integer> tuple;
@@ -151,7 +149,7 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
                 preparedStatement.setNull(i, Types.VARCHAR);
             }
         }
-
+        numUpdate.inc();
     }
 
     private Map<String, Tuple<Object, Integer>> getDateSet(RowMetaInterface rowMeta, Object[] row) throws KettleValueException {

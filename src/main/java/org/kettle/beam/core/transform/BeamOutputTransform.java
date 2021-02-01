@@ -87,6 +87,7 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
         write = write.withSuffix( fileSuffix );
       }
 
+
       // For streaming data sources...
       //
       if (windowed) {

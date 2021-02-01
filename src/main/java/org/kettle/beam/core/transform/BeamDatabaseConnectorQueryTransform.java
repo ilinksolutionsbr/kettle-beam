@@ -15,8 +15,10 @@ import org.apache.beam.sdk.values.PDone;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.coder.KettleRowCoder;
+import org.kettle.beam.core.coder.KettleRowSimpleCoder;
 import org.kettle.beam.core.util.JsonRowMeta;
 import org.kettle.beam.steps.database.FieldInfo;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -121,11 +123,10 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
                     .withRowMapper(new JdbcIO.RowMapper<KettleRow>() {
                         @Override
                         public KettleRow mapRow(ResultSet resultSet) throws Exception {
-                            numRead.inc();
                             return BeamDatabaseConnectorQueryTransform.this.parse(resultSet);
                         }
                     })
-                    .withCoder(new KettleRowCoder())
+                    .withCoder(new KettleRowSimpleCoder())
                     //.withCoder(SerializableCoder.of(KettleRow.class))
 
             );
@@ -166,27 +167,36 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
 
     }
 
-    public KettleRow parse(ResultSet resultSet) throws SQLException {
+    public KettleRow parse(ResultSet resultSet) throws Exception {
         Object[] row;
         List<String> columns = new ArrayList<>();
 
         String columnName;
+        List<String> columnsNotFound = new ArrayList<>();
+        boolean found;
 
         if(this.fields.size() > 0) {
             for(FieldInfo fieldInfo : this.fields){
+                found = false;
                 for(int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                     columnName = resultSet.getMetaData().getColumnName(i);
                     if(fieldInfo.getColumn().equalsIgnoreCase(columnName)){
                         columns.add(columnName);
+                        found = true;
                         break;
                     }
                 }
+                if(!found){columnsNotFound.add(fieldInfo.getName());}
             }
         }else{
             for(int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                 columnName = resultSet.getMetaData().getColumnName(i);
                 columns.add(columnName);
             }
+        }
+
+        if(columnsNotFound.size() > 0){
+            throw new KettleException("Colunas não retornadas: " + String.join(", ", columnsNotFound));
         }
 
         Object value;
@@ -198,6 +208,8 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
 
         KettleRow kettleRow = new KettleRow();
         kettleRow.setRow(row);
+
+        numRead.inc();
 
         return kettleRow;
     }

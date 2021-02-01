@@ -7,6 +7,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.util.JsonRowMeta;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
@@ -63,6 +64,9 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
       TableRow tableRow = new TableRow();
       for (int i=0;i<rowMeta.size();i++) {
         ValueMetaInterface valueMeta = rowMeta.getValueMeta( i );
+        if(i >= inputRow.getRow().length){
+          throw new KettleException("Quantidade de campos de entrada de dados menor que total de campos mapeadas, índice: '" + i + "' campo '" + valueMeta.getName() + "'");
+        }
         Object valueData = inputRow.getRow()[i];
         if (!valueMeta.isNull( valueData )) {
           switch ( valueMeta.getType() ) {
@@ -81,6 +85,7 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
               throw new RuntimeException( "Data type conversion from Kettle to BigQuery TableRow not supported yet: " +valueMeta.toString());
           }
         }
+
       }
 
       // Pass the row to the process context

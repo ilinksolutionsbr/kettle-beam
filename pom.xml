@@ -149,6 +149,11 @@
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-datastore</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-nio</artifactId>
+    </dependency>
+
 
     <dependency>
       <groupId>io.grpc</groupId>

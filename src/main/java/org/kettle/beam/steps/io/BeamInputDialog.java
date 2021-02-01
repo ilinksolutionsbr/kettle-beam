@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.FileDefinition;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.util.Utils;
@@ -25,6 +26,7 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.metastore.persist.MetaStoreFactory;
@@ -210,13 +212,16 @@ public class BeamInputDialog extends BaseStepDialog implements StepDialogInterfa
   }
 
   private void ok() {
-    if ( Utils.isEmpty( wStepname.getText() ) ) {
-      return;
+    try {
+      if (Utils.isEmpty(wStepname.getText())) {return;}
+      if (Strings.isNullOrEmpty(wInputLocation.getText()) ) {throw new Exception("Arquivo de entrada nao informado.");}
+      getInfo(input);
+      dispose();
+
+    }catch (Exception ex){
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
     }
-
-    getInfo( input );
-
-    dispose();
   }
 
   private void getInfo( BeamInputMeta in ) {

@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 
 public class KettleRowCoder extends AtomicCoder<KettleRow> {
@@ -54,14 +55,15 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
       }
     }
     out.flush();
+
   }
 
 
   @Override public KettleRow decode( InputStream inStream ) throws CoderException, IOException {
 
     ObjectInputStream in = new ObjectInputStream( inStream );
-
     Object[] row = null;
+
     int length = in.readInt();
     if ( length < 0 ) {
       return new KettleRow( row );
@@ -82,6 +84,7 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
     }
 
     return new KettleRow(row);
+
   }
 
   @Override public void verifyDeterministic() throws NonDeterministicException {
@@ -98,28 +101,83 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
       }
       break;
       case ValueMetaInterface.TYPE_INTEGER: {
-        Long lng = (Long) object;
-        out.writeLong( lng );
+        if(object == null) {
+          out.writeLong((Long)object);
+
+        }else if ( object instanceof Byte ) {
+          out.writeByte((Byte)object);
+
+        }else if ( object instanceof Short ) {
+          out.writeShort((Short)object);
+
+        }else if ( object instanceof Integer ) {
+          out.writeInt((Integer)object);
+
+        }else if ( object instanceof Long ) {
+          out.writeLong((Long)object);
+
+        }else {
+          out.writeLong(Long.parseLong(object.toString()));
+        }
       }
       break;
       case ValueMetaInterface.TYPE_DATE: {
-        Long lng = ( (Date) object ).getTime();
-        out.writeLong( lng );
+        if(object == null) {
+          out.writeLong((Long)object);
+
+        }else if ( object instanceof Date ) {
+          out.writeLong(( (Date) object ).getTime());
+
+        }else if ( object instanceof Calendar ) {
+          out.writeLong(( (Calendar) object ).getTime().getTime());
+
+        }else {
+          out.writeLong(Long.parseLong(object.toString()));
+        }
       }
       break;
       case ValueMetaInterface.TYPE_BOOLEAN: {
-        Long lng = ( (Date) object ).getTime();
-        out.writeLong( lng );
+        if(object == null) {
+          out.writeBoolean(false);
+
+        }else if ( object instanceof Boolean ) {
+          out.writeBoolean((Boolean) object);
+
+        }else if ( object instanceof Byte ) {
+          out.writeBoolean(((Byte)object) > 0);
+
+        }else if ( object instanceof Short ) {
+          out.writeBoolean(((Short)object) > 0);
+
+        }else if ( object instanceof Integer ) {
+          out.writeBoolean(((Integer)object) > 0);
+
+        }else if ( object instanceof Long ) {
+          out.writeBoolean(((Long)object) > 0);
+
+        }else {
+          out.writeBoolean(Boolean.parseBoolean(object.toString()));
+        }
+
       }
       break;
       case ValueMetaInterface.TYPE_NUMBER: {
-        Double dbl = (Double) object;
-        out.writeDouble( dbl );
+        if(object == null) {
+          out.writeDouble((Double) object);
+
+        }else if ( object instanceof Double ) {
+          out.writeDouble((Double)object);
+
+        }else if ( object instanceof Float ) {
+          out.writeFloat((Float) object);
+
+        }else {
+          out.writeLong(Long.parseLong(object.toString()));
+        }
       }
       break;
       case ValueMetaInterface.TYPE_BIGNUMBER: {
-        BigDecimal bd = (BigDecimal) object;
-        out.writeUTF( bd.toString() );
+        out.writeDouble( ((BigDecimal) object).doubleValue() );
       }
       break;
       default:
@@ -135,8 +193,16 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
       }
 
       case ValueMetaInterface.TYPE_INTEGER: {
-        Long lng = in.readLong();
-        return lng;
+        Object result = null;
+        try {result = in.readLong();}catch (Exception ex){}
+        if(result != null){return result;}
+        try {result = in.readInt();}catch (Exception ex){}
+        if(result != null){return result;}
+        try {result = in.readShort();}catch (Exception ex){}
+        if(result != null){return result;}
+        try {result = in.readByte();}catch (Exception ex){}
+        if(result != null){return result;}
+        return null;
       }
 
       case ValueMetaInterface.TYPE_DATE: {
@@ -150,16 +216,30 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
       }
 
       case ValueMetaInterface.TYPE_NUMBER: {
-        Double dbl = in.readDouble();
-        return dbl;
+        Object result = null;
+        try {result = in.readDouble();}catch (Exception ex){}
+        if(result != null){return result;}
+        try {result = in.readFloat();}catch (Exception ex){}
+        if(result != null){return result;}
+        return null;
       }
 
       case ValueMetaInterface.TYPE_BIGNUMBER: {
-        String bd = in.readUTF();
-        return new BigDecimal( bd );
+        return new BigDecimal(in.readDouble());
       }
+
+      case ValueMetaInterface.TYPE_TIMESTAMP: {
+        Long timestamp = in.readLong();
+        return timestamp;
+      }
+
       default:
-        throw new IOException( "Data type not supported yet: " + objectType );
+        try {
+          return in.readObject();
+        }catch (Exception ex){
+          throw new IOException( "Data type not supported yet: " + objectType, ex);
+        }
+
     }
   }
 
@@ -168,10 +248,22 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
     if ( object instanceof String ) {
       return ValueMetaInterface.TYPE_STRING;
     }
+    if ( object instanceof Byte ) {
+      return ValueMetaInterface.TYPE_INTEGER;
+    }
+    if ( object instanceof Short ) {
+      return ValueMetaInterface.TYPE_INTEGER;
+    }
+    if ( object instanceof Integer ) {
+      return ValueMetaInterface.TYPE_INTEGER;
+    }
     if ( object instanceof Long ) {
       return ValueMetaInterface.TYPE_INTEGER;
     }
     if ( object instanceof Date ) {
+      return ValueMetaInterface.TYPE_DATE;
+    }
+    if ( object instanceof Calendar) {
       return ValueMetaInterface.TYPE_DATE;
     }
     if ( object instanceof Timestamp ) {
@@ -181,6 +273,9 @@ public class KettleRowCoder extends AtomicCoder<KettleRow> {
       return ValueMetaInterface.TYPE_BOOLEAN;
     }
     if ( object instanceof Double) {
+      return ValueMetaInterface.TYPE_NUMBER;
+    }
+    if ( object instanceof Float) {
       return ValueMetaInterface.TYPE_NUMBER;
     }
     if ( object instanceof BigDecimal ) {

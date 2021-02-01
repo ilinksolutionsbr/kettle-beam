@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.junit.Test;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.coder.KettleRowCoder;
+import org.kettle.beam.core.coder.KettleRowSimpleCoder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,12 +14,12 @@ import java.util.Date;
 public class KettleRowCoderTest extends TestCase {
 
   ByteArrayOutputStream outputStream;
-  private KettleRowCoder kettleRowCoder;
+  private KettleRowSimpleCoder kettleRowCoder;
 
   @Override protected void setUp() throws Exception {
 
     outputStream= new ByteArrayOutputStream( 1000000 );
-    kettleRowCoder = new KettleRowCoder();
+    kettleRowCoder = new KettleRowSimpleCoder();
   }
 
   @Test
