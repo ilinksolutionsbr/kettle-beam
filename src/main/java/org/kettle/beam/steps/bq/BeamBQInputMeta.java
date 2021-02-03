@@ -1,5 +1,6 @@
 package org.kettle.beam.steps.bq;
 
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -25,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Step(
-  id = "BeamBQInput",
+  id = BeamConst.STRING_BEAM_BIGQUERY_INPUT_PLUGIN_ID,
   name = "Beam BigQuery Input",
   description = "Reads from a BigQuery table in Beam",
   image = "beam-bq-input.svg",

@@ -2,6 +2,7 @@ package org.kettle.beam.steps.window;
 
 import org.apache.commons.lang.StringUtils;
 import org.kettle.beam.core.BeamDefaults;
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -31,7 +32,7 @@ import org.w3c.dom.Node;
 import java.util.List;
 
 @Step(
-  id = "BeamWindow",
+  id = BeamConst.STRING_BEAM_WINDOW_PLUGIN_ID,
   name = "Beam Window",
   description = "Create a Beam Window",
   image = "beam-window.svg",

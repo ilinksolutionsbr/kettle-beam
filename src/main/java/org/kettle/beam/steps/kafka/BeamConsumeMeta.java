@@ -1,5 +1,6 @@
 package org.kettle.beam.steps.kafka;
 
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Step(
-  id = "BeamKafkaConsume",
+  id = BeamConst.STRING_BEAM_KAFKA_CONSUME_PLUGIN_ID,
   name = "Beam Kafka Consume",
   description = "Get messages from Kafka topics (Kafka Consumer)",
   image = "beam-kafka-input.svg",

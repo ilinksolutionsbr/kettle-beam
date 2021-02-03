@@ -1,5 +1,6 @@
 package org.kettle.beam.steps.window;
 
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -25,7 +26,7 @@ import org.w3c.dom.Node;
 import java.util.List;
 
 @Step(
-  id = "BeamTimestamp",
+  id = BeamConst.STRING_BEAM_TIMESTAMP_PLUGIN_ID,
   name = "Beam Timestamp",
   description = "Add timestamps to a bounded data source",
   image = "beam-timestamp.svg",

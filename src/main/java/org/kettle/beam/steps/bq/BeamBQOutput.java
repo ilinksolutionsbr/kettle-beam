@@ -110,7 +110,7 @@ public class BeamBQOutput extends BaseStep implements StepInterface {
             bigquery.create(tableInfo);
 
         } catch( Exception ex ) {
-            log.logError("Não foi possível criar a tabela", ex);
+            log.logDebug ("Tabela existente, ignorando a criação da tabela", ex);
         }
 
     }
@@ -132,7 +132,7 @@ public class BeamBQOutput extends BaseStep implements StepInterface {
         return type;
     }
 
-    private void truncateTable(BigQuery bigquery, BeamBQOutputMeta meta){
+    private void truncateTable(BigQuery bigquery, BeamBQOutputMeta meta) throws Exception{
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append("TRUNCATE TABLE ");
         queryBuilder.append("`");
@@ -148,6 +148,7 @@ public class BeamBQOutput extends BaseStep implements StepInterface {
             bigquery.query(queryConfig).getTotalRows();
         }catch (Exception ex){
             this.log.logError("Google BigQuery Output", ex);
+            throw ex;
         }
     }
 

@@ -2,6 +2,7 @@ package org.kettle.beam.steps.io;
 
 import org.apache.commons.lang.StringUtils;
 import org.kettle.beam.metastore.FileDefinition;
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -23,7 +24,7 @@ import org.w3c.dom.Node;
 import java.util.List;
 
 @Step(
-  id = "BeamOutput",
+  id = BeamConst.STRING_BEAM_OUTPUT_PLUGIN_ID,
   name = "Beam Output",
   description = "Describes a Beam Output",
   image = "beam-output.svg",

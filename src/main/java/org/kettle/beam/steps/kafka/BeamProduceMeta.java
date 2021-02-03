@@ -1,5 +1,6 @@
 package org.kettle.beam.steps.kafka;
 
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -23,7 +24,7 @@ import org.w3c.dom.Node;
 import java.util.List;
 
 @Step(
-  id = "BeamKafkaProduce",
+  id = BeamConst.STRING_BEAM_KAFKA_PRODUCE_PLUGIN_ID,
   name = "Beam Kafka Produce",
   description = "Send messages to a Kafka Topic (Producer)",
   image = "beam-kafka-output.svg",
