@@ -44,20 +44,6 @@ public class BeamFirestoreInput extends BaseStep implements StepInterface {
   @Override 
   public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
 
-    // Outside of a Beam Runner this step doesn't actually do anything, it's just metadata
-    // This step gets converted into Beam API calls in a pipeline
-    //
-    //return false;
-    
-//    Object[] row = getRow();
-//    
-//    if (row == null) {
-//    
-//        setOutputDone();
-//        return false;
-//    }
-//    
-
     BeamFirestoreInputMeta metaData = (BeamFirestoreInputMeta)this.getStepMeta().getStepMetaInterface();
     System.out.println(BeamConst.STRING_BEAM_FIRESTORE_INPUT_PLUGIN_ID + "-> " + metaData.getEntity());
         

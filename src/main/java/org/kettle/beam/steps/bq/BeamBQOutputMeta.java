@@ -40,6 +40,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public static final String PROJECT_ID = "project_id";
   public static final String DATASET_ID = "dataset_id";
   public static final String TABLE_ID = "table_id";
+  public static final String TEMP_LOCATION = "temp_location";
   public static final String CREATE_IF_NEEDED = "create_if_needed";
   public static final String TRUNCATE_TABLE = "truncate_table";
   public static final String FAIL_IF_NOT_EMPTY = "fail_if_not_empty";
@@ -83,6 +84,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     xml.append( XMLHandler.addTagValue( PROJECT_ID, projectId ) );
     xml.append( XMLHandler.addTagValue( DATASET_ID, datasetId ) );
     xml.append( XMLHandler.addTagValue( TABLE_ID, tableId) );
+    xml.append( XMLHandler.addTagValue( TEMP_LOCATION, tempLocation) );
     xml.append( XMLHandler.addTagValue( CREATE_IF_NEEDED, creatingIfNeeded) );
     xml.append( XMLHandler.addTagValue( TRUNCATE_TABLE, truncatingTable) );
     xml.append( XMLHandler.addTagValue( FAIL_IF_NOT_EMPTY, failingIfNotEmpty) );
@@ -94,6 +96,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     projectId = XMLHandler.getTagValue( stepNode, PROJECT_ID );
     datasetId= XMLHandler.getTagValue( stepNode, DATASET_ID );
     tableId= XMLHandler.getTagValue( stepNode, TABLE_ID);
+    tempLocation= XMLHandler.getTagValue( stepNode, TEMP_LOCATION);
     creatingIfNeeded= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, CREATE_IF_NEEDED) );
     truncatingTable= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, TRUNCATE_TABLE) );
     failingIfNotEmpty= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, FAIL_IF_NOT_EMPTY) );

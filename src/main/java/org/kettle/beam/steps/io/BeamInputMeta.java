@@ -2,6 +2,7 @@ package org.kettle.beam.steps.io;
 
 import org.apache.commons.lang.StringUtils;
 import org.kettle.beam.metastore.FileDefinition;
+import org.kettle.beam.steps.bq.BQField;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -24,6 +25,7 @@ import org.pentaho.metastore.persist.MetaStoreFactory;
 import org.pentaho.metastore.util.PentahoDefaults;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Step(
@@ -39,12 +41,15 @@ public class BeamInputMeta extends BaseStepMeta implements StepMetaInterface {
   public static final String FILE_DESCRIPTION_NAME = "file_description_name";
 
   private String inputLocation;
-
   private String fileDescriptionName;
+  private List<BeamField> fields;
+
 
   public BeamInputMeta() {
     super();
+    this.fields = new ArrayList<>();
   }
+
 
   @Override public void setDefault() {
   }
@@ -138,6 +143,23 @@ public class BeamInputMeta extends BaseStepMeta implements StepMetaInterface {
    */
   public void setFileDescriptionName( String fileDescriptionName ) {
     this.fileDescriptionName = fileDescriptionName;
+  }
+
+
+  /**
+   * Gets fields
+   *
+   * @return value of fields
+   */
+  public List<BeamField> getFields() {
+    return fields;
+  }
+
+  /**
+   * @param fields The fields to set
+   */
+  public void setFields( List<BeamField> fields ) {
+    this.fields = fields;
   }
 
 }
