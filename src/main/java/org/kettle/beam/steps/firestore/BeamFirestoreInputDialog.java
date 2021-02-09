@@ -212,10 +212,10 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
 
         Button helpButton = new Button(shell, SWT.PUSH);
 
-        helpButton.setText("?");
+        helpButton.setText(BaseMessages.getString( PKG, "BeamInputFirestore.HelpButton" ));
 
         helpButton.addListener(SWT.Selection, e ->
-            openUrlHelp("https://callink.atlassian.net/wiki/spaces/CBD/pages/584548483/Step+Firestore+Datastore+Input")
+            openUrlHelp(BaseMessages.getString( PKG, "BeamInputFirestore.HelpLink" ))
         );
         return helpButton;
     }

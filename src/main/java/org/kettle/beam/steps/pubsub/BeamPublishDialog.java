@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.BeamDefaults;
 import org.kettle.beam.core.util.Strings;
+import org.kettle.beam.core.util.Web;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.util.Utils;
@@ -173,6 +174,24 @@ public class BeamPublishDialog extends BaseStepDialog implements StepDialogInter
     return stepname;
   }
 
+  /**
+   * Método responsável por criar e o botão de ajuda que quando clicado
+   * abre uma pagína de ajuda para o componente.
+   *
+   * @param shell
+   * @param stepMeta
+   * @param plugin
+   * @return
+   */
+  @Override
+  protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
+    Button helpButton = new Button(shell, SWT.PUSH);
+    helpButton.setText(BaseMessages.getString( PKG, "BeamPublishDialog.HelpButton" ));
+    helpButton.addListener(SWT.Selection, e ->
+            Web.open(this, BaseMessages.getString( PKG, "BeamPublishDialog.HelpLink" ))
+    );
+    return helpButton;
+  }
 
   /**
    * Populate the widgets.
@@ -217,14 +236,4 @@ public class BeamPublishDialog extends BaseStepDialog implements StepDialogInter
 
     input.setChanged();
   }
-
-
-  @Override
-  protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
-    Button helpButton = new Button( shell, SWT.PUSH );
-    helpButton.setText("Ajuda");
-    helpButton.addListener( SWT.Selection, (e) -> {helpButton.setText("Clicado");} );
-    return helpButton;
-  }
-
 }

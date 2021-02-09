@@ -226,9 +226,9 @@ public class BeamFirestoreOutputDialog extends BaseStepDialog implements StepDia
     @Override
     protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
         Button helpButton = new Button(shell, SWT.PUSH);
-        helpButton.setText("?");
+        helpButton.setText(BaseMessages.getString( PACKAGE, "BeamOutputFirestore.HelpButton" ));
         helpButton.addListener(SWT.Selection, e ->
-                Web.open(this,"https://callink.atlassian.net/wiki/spaces/CBD/pages/584548483/Step+Firestore+Datastore+Input")
+                Web.open(this, BaseMessages.getString( PACKAGE, "BeamOutputFirestore.HelpLink" ))
         );
         return helpButton;
     }

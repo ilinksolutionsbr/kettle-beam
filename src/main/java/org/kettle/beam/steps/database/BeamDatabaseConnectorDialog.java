@@ -358,9 +358,9 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
     @Override
     protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
         Button helpButton = new Button(shell, SWT.PUSH);
-        helpButton.setText("?");
+        helpButton.setText(BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.HelpButton" ));
         helpButton.addListener(SWT.Selection, e ->
-                Web.open(this,"https://callink.atlassian.net/wiki/spaces/CBD/pages/584548483/Step+Firestore+Datastore+Input")
+                Web.open(this, BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.HelpLink" ))
         );
         return helpButton;
     }

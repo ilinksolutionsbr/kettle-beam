@@ -27,9 +27,11 @@ import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.fn.BQSchemaAndRecordToKettleFn;
 import org.kettle.beam.core.util.Strings;
+import org.kettle.beam.core.util.Web;
 import org.kettle.beam.perspective.BeamHelper;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
+import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
@@ -39,6 +41,7 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
@@ -244,6 +247,25 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
       }
     }
     return stepname;
+  }
+
+  /**
+   * Método responsável por criar e o botão de ajuda que quando clicado
+   * abre uma pagína de ajuda para o componente.
+   *
+   * @param shell
+   * @param stepMeta
+   * @param plugin
+   * @return
+   */
+  @Override
+  protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
+    Button helpButton = new Button(shell, SWT.PUSH);
+    helpButton.setText(BaseMessages.getString( PKG, "BeamBQInputDialog.HelpButton" ));
+    helpButton.addListener(SWT.Selection, e ->
+            Web.open(this, BaseMessages.getString( PKG, "BeamBQInputDialog.HelpLink" ))
+    );
+    return helpButton;
   }
 
   public void getFields() {
