@@ -26,6 +26,7 @@ import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.ui.core.widget.PasswordTextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 import java.util.ArrayList;
@@ -194,7 +195,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         formData.top = new FormAttachment( lastControl, margin );
         formData.right = new FormAttachment( middle, -margin );
         lblPassword.setLayoutData(formData);
-        this.txtPassword = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        this.txtPassword = new PasswordTextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
         props.setLook(this.txtPassword);
         formData = new FormData();
         formData.left = new FormAttachment( middle, 0 );
