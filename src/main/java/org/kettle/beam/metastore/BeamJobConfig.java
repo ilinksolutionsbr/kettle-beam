@@ -189,8 +189,8 @@ public class BeamJobConfig {
   @MetaStoreAttribute
   private String flinkMaxBundleTimeMills;
 
-  @MetaStoreAttribute
-  private String flinkShutdownSourcesOnFinalWatermark;
+  //@MetaStoreAttribute
+  //private String flinkShutdownSourcesOnFinalWatermark;
 
   @MetaStoreAttribute
   private String flinkLatencyTrackingInterval;
@@ -1075,17 +1075,16 @@ public class BeamJobConfig {
    * Gets flinkShutdownSourcesOnFinalWatermark
    *
    * @return value of flinkShutdownSourcesOnFinalWatermark
-   */
   public String getFlinkShutdownSourcesOnFinalWatermark() {
     return flinkShutdownSourcesOnFinalWatermark;
   }
 
   /**
    * @param flinkShutdownSourcesOnFinalWatermark The flinkShutdownSourcesOnFinalWatermark to set
-   */
   public void setFlinkShutdownSourcesOnFinalWatermark( String flinkShutdownSourcesOnFinalWatermark ) {
     this.flinkShutdownSourcesOnFinalWatermark = flinkShutdownSourcesOnFinalWatermark;
   }
+   */
 
   /**
    * Gets flinkLatencyTrackingInterval

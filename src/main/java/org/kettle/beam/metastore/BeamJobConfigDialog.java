@@ -145,7 +145,7 @@ public class BeamJobConfigDialog {
   private TextVar wFlinkRetainExternalizedCheckpointsOnCancellation;
   private TextVar wFlinkMaxBundleSize;
   private TextVar wFlinkMaxBundleTimeMills;
-  private TextVar wFlinkShutdownSourcesOnFinalWatermark;
+  //private TextVar wFlinkShutdownSourcesOnFinalWatermark;
   private TextVar wFlinkLatencyTrackingInterval;
   private TextVar wFlinkAutoWatermarkInterval;
   private ComboVar wFlinkExecutionModeForBatch;
@@ -269,7 +269,7 @@ public class BeamJobConfigDialog {
     wFlinkRetainExternalizedCheckpointsOnCancellation.addSelectionListener( selAdapter );
     wFlinkMaxBundleSize.addSelectionListener( selAdapter );
     wFlinkMaxBundleTimeMills.addSelectionListener( selAdapter );
-    wFlinkShutdownSourcesOnFinalWatermark.addSelectionListener( selAdapter );
+    //wFlinkShutdownSourcesOnFinalWatermark.addSelectionListener( selAdapter );
     wFlinkLatencyTrackingInterval.addSelectionListener( selAdapter );
     wFlinkAutoWatermarkInterval.addSelectionListener( selAdapter );
     wFlinkExecutionModeForBatch.addSelectionListener( selAdapter );
@@ -1521,7 +1521,7 @@ public class BeamJobConfigDialog {
 
     Label wlFlinkDisbaleMetrics = new Label( wFlinkComp, SWT.RIGHT );
     props.setLook( wlFlinkDisbaleMetrics );
-    wlFlinkDisbaleMetrics.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.FlinkDisbaleMetrics.Label" ) );
+    wlFlinkDisbaleMetrics.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.FlinkDisableMetrics.Label" ) );
     FormData fdlFlinkDisbaleMetrics = new FormData();
     fdlFlinkDisbaleMetrics.top = new FormAttachment( lastControl, margin );
     fdlFlinkDisbaleMetrics.left = new FormAttachment( 0, -margin ); // First one in the left top corner
@@ -1604,6 +1604,7 @@ public class BeamJobConfigDialog {
     wFlinkMaxBundleTimeMills.setLayoutData( fdFlinkMaxBundleTimeMills );
     lastControl = wFlinkMaxBundleTimeMills;
 
+    /*
     Label wlFlinkShutdownSourcesOnFinalWatermark = new Label( wFlinkComp, SWT.RIGHT );
     props.setLook( wlFlinkShutdownSourcesOnFinalWatermark );
     wlFlinkShutdownSourcesOnFinalWatermark.setText( BaseMessages.getString( PKG, "BeamJobConfigDialog.FlinkShutdownSourcesOnFinalWatermark.Label" ) );
@@ -1620,6 +1621,7 @@ public class BeamJobConfigDialog {
     fdFlinkShutdownSourcesOnFinalWatermark.right = new FormAttachment( 95, 0 );
     wFlinkShutdownSourcesOnFinalWatermark.setLayoutData( fdFlinkShutdownSourcesOnFinalWatermark );
     lastControl = wFlinkShutdownSourcesOnFinalWatermark;
+    */
 
     Label wlFlinkLatencyTrackingInterval = new Label( wFlinkComp, SWT.RIGHT );
     props.setLook( wlFlinkLatencyTrackingInterval );
@@ -1794,7 +1796,7 @@ public class BeamJobConfigDialog {
     wFlinkRetainExternalizedCheckpointsOnCancellation.setText( Const.NVL( config.getFlinkRetainExternalizedCheckpointsOnCancellation(), "" ) );
     wFlinkMaxBundleSize.setText( Const.NVL( config.getFlinkMaxBundleSize(), "" ) );
     wFlinkMaxBundleTimeMills.setText( Const.NVL( config.getFlinkMaxBundleTimeMills(), "" ) );
-    wFlinkShutdownSourcesOnFinalWatermark.setText( Const.NVL( config.getFlinkShutdownSourcesOnFinalWatermark(), "" ) );
+    //wFlinkShutdownSourcesOnFinalWatermark.setText( Const.NVL( config.getFlinkShutdownSourcesOnFinalWatermark(), "" ) );
     wFlinkLatencyTrackingInterval.setText( Const.NVL( config.getFlinkLatencyTrackingInterval(), "" ) );
     wFlinkAutoWatermarkInterval.setText( Const.NVL( config.getFlinkAutoWatermarkInterval(), "" ) );
     wFlinkExecutionModeForBatch.setText( Const.NVL( config.getFlinkExecutionModeForBatch(), "" ) );
@@ -1914,7 +1916,7 @@ public class BeamJobConfigDialog {
     cfg.setFlinkRetainExternalizedCheckpointsOnCancellation( wFlinkRetainExternalizedCheckpointsOnCancellation.getText() );
     cfg.setFlinkMaxBundleSize( wFlinkMaxBundleSize.getText() );
     cfg.setFlinkMaxBundleTimeMills( wFlinkMaxBundleTimeMills.getText() );
-    cfg.setFlinkShutdownSourcesOnFinalWatermark( wFlinkShutdownSourcesOnFinalWatermark.getText() ); ;
+    //cfg.setFlinkShutdownSourcesOnFinalWatermark( wFlinkShutdownSourcesOnFinalWatermark.getText() ); ;
     cfg.setFlinkLatencyTrackingInterval( wFlinkLatencyTrackingInterval.getText() );
     cfg.setFlinkAutoWatermarkInterval( wFlinkAutoWatermarkInterval.getText() );
     cfg.setFlinkExecutionModeForBatch( wFlinkExecutionModeForBatch.getText() );

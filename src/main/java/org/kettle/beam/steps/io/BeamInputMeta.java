@@ -43,12 +43,10 @@ public class BeamInputMeta extends BaseStepMeta implements StepMetaInterface {
 
   private String inputLocation;
   private String fileDescriptionName;
-  private List<BeamField> fields;
 
 
   public BeamInputMeta() {
     super();
-    this.fields = new ArrayList<>();
   }
 
 
@@ -144,23 +142,6 @@ public class BeamInputMeta extends BaseStepMeta implements StepMetaInterface {
    */
   public void setFileDescriptionName( String fileDescriptionName ) {
     this.fileDescriptionName = fileDescriptionName;
-  }
-
-
-  /**
-   * Gets fields
-   *
-   * @return value of fields
-   */
-  public List<BeamField> getFields() {
-    return fields;
-  }
-
-  /**
-   * @param fields The fields to set
-   */
-  public void setFields( List<BeamField> fields ) {
-    this.fields = fields;
   }
 
 }

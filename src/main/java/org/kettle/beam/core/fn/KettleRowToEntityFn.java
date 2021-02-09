@@ -1,16 +1,12 @@
 package org.kettle.beam.core.fn;
 
-import com.google.cloud.Timestamp;
 import com.google.datastore.v1.Entity;
-import com.google.datastore.v1.Key;
 import com.google.datastore.v1.Value;
 import com.google.datastore.v1.client.DatastoreHelper;
-import com.google.protobuf.Descriptors;
 import com.google.protobuf.NullValue;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.values.KV;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.util.Json;
@@ -201,7 +197,7 @@ public class KettleRowToEntityFn extends DoFn<KettleRow, Entity> {
 
             entityBuilder.putProperties(field, entityValue);
             if (field.equalsIgnoreCase(this.keyField)) {
-                Key key = DatastoreHelper.makeKey(this.kind, value.toString()).build();
+                com.google.datastore.v1.Key key = DatastoreHelper.makeKey(this.kind, value.toString()).build();
                 entityBuilder.setKey(key);
                 isFoundKey = true;
             }

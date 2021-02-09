@@ -262,6 +262,7 @@ public class KettleBeamPipelineExecutor {
       updateListeners( pipelineResult );
 
       logChannel.logBasic( "  ----------------- End of Beam job " + pipeline.getOptions().getJobName() + " -----------------------" );
+      DataflowPipelineOptions dataflowOptions;
 
       return pipelineResult;
     } catch(Exception e) {
@@ -278,6 +279,7 @@ public class KettleBeamPipelineExecutor {
     if (runnerType==null) {
       throw new KettleException( "Runner type '"+jobConfig.getRunnerTypeName()+"' is not recognized");
     }
+
     switch ( runnerType ) {
       case Direct: return DirectRunner.fromOptions( pipeline.getOptions() ).run( pipeline );
       case Flink: return FlinkRunner.fromOptions(pipeline.getOptions()).run( pipeline );
@@ -660,11 +662,13 @@ public class KettleBeamPipelineExecutor {
     }
 
     // If set, shutdown sources when their watermark reaches +Inf.")
+    /*
     if (StringUtils.isNotEmpty( config.getFlinkShutdownSourcesOnFinalWatermark() )) {
       String str = space.environmentSubstitute( config.getFlinkShutdownSourcesOnFinalWatermark() );
       boolean value = "Y".equalsIgnoreCase( str ) || "TRUE".equalsIgnoreCase( str );
       options.setShutdownSourcesOnFinalWatermark( value );
     }
+    */
 
     // Interval in milliseconds for sending latency tracking marks from the sources to the sinks. Interval value <= 0 disables the feature.")
     if (StringUtils.isNotEmpty( config.getFlinkLatencyTrackingInterval() )) {
