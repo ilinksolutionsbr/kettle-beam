@@ -45,9 +45,11 @@ public class FileDefinitionDialog {
   private Text wDescription;
   private Text wSeparator;
   private Text wEnclosure;
+  private Text wFilePath;
   private TableView wFields;
   private Button wOK;
   private Button wCancel;
+  private Button wGetFields;
 
   Control lastControl;
 
@@ -92,7 +94,11 @@ public class FileDefinitionDialog {
     wCancel.setText( BaseMessages.getString( PKG, "System.Button.Cancel" ) );
     wCancel.addListener( SWT.Selection, e -> cancel() );
 
-    BaseStepDialog.positionBottomButtons( shell, new Button[] { wOK, wCancel }, margin, null );
+    wGetFields = new Button( shell, SWT.PUSH );
+    wGetFields.setText( BaseMessages.getString( PKG, "System.Button.GetFields" ) );
+    wGetFields.addListener( SWT.Selection, e -> getFields() );
+
+    BaseStepDialog.positionBottomButtons( shell, new Button[] { wOK, wGetFields, wCancel }, margin, null );
 
     // The rest of the dialog is for the widgets...
     //
@@ -109,6 +115,7 @@ public class FileDefinitionDialog {
     wDescription.addSelectionListener( selAdapter );
     wSeparator.addSelectionListener( selAdapter );
     wEnclosure.addSelectionListener( selAdapter );
+    wFilePath.addSelectionListener( selAdapter );
 
     // Detect X or ALT-F4 or something that kills this window...
     shell.addShellListener( new ShellAdapter() {
@@ -209,6 +216,25 @@ public class FileDefinitionDialog {
     wEnclosure.setLayoutData( fdEnclosure );
     lastControl = wEnclosure;
 
+    //File Path
+    //
+    Label wlFilePath = new Label( shell, SWT.RIGHT );
+    props.setLook( wlFilePath );
+    wlFilePath.setText( BaseMessages.getString( PKG, "FileDefinitionDialog.FilePath.Label" ) );
+    FormData fdlFilePath = new FormData();
+    fdlFilePath.top = new FormAttachment( lastControl, margin );
+    fdlFilePath.left = new FormAttachment( 0, 0 ); // First one in the left top corner
+    fdlFilePath.right = new FormAttachment( middle, -margin );
+    wlFilePath.setLayoutData( fdlFilePath );
+    wFilePath = new Text( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wFilePath );
+    FormData fdFilePath = new FormData();
+    fdFilePath.top = new FormAttachment( wlFilePath, 0, SWT.CENTER );
+    fdFilePath.left = new FormAttachment( middle, 0 ); // To the right of the label
+    fdFilePath.right = new FormAttachment( 95, 0 );
+    wFilePath.setLayoutData( fdFilePath );
+    lastControl = wFilePath;
+
     // Fields...
     //
     Label wlFields = new Label( shell, SWT.LEFT );
@@ -248,6 +274,7 @@ public class FileDefinitionDialog {
     wDescription.setText( Const.NVL( fileDefinition.getDescription(), "" ) );
     wSeparator.setText( Const.NVL( fileDefinition.getSeparator(), "" ) );
     wEnclosure.setText( Const.NVL( fileDefinition.getEnclosure(), "" ) );
+    wFilePath.setText( Const.NVL( fileDefinition.getFilePath(), "" ) );
 
     List<FieldDefinition> fields = fileDefinition.getFieldDefinitions();
     for (int i=0;i<fields.size();i++) {
@@ -282,12 +309,20 @@ public class FileDefinitionDialog {
     dispose();
   }
 
+  private void getFields() {
+
+    System.out.println(wFilePath.getText());
+    System.out.println(wEnclosure.getText());
+
+  }
+
   // Get dialog info in securityService
   private void getInfo( FileDefinition def ) {
     def.setName( wName.getText() );
     def.setDescription( wDescription.getText() );
     def.setSeparator( wSeparator.getText() );
     def.setEnclosure( wEnclosure.getText() );
+    def.setFilePath( wFilePath.getText() );
     def.getFieldDefinitions().clear();
     for (int i=0;i<wFields.nrNonEmpty();i++) {
       TableItem item = wFields.getNonEmpty( i );

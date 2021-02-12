@@ -30,16 +30,20 @@ public class FileDefinition implements Serializable {
   @MetaStoreAttribute
   private String enclosure;
 
+  @MetaStoreAttribute
+  private String filePath;
+
   public FileDefinition() {
     fieldDefinitions = new ArrayList<>();
   }
 
-  public FileDefinition( String name, String description, List<FieldDefinition> fieldDefinitions, String separator, String enclosure ) {
+  public FileDefinition( String name, String description, List<FieldDefinition> fieldDefinitions, String separator, String enclosure, String filePath) {
     this.name = name;
     this.description = description;
     this.fieldDefinitions = fieldDefinitions;
     this.separator = separator;
     this.enclosure = enclosure;
+    this.filePath = filePath;
   }
 
   public RowMetaInterface getRowMeta() throws KettlePluginException {
@@ -125,10 +129,25 @@ public class FileDefinition implements Serializable {
     return enclosure;
   }
 
+
   /**
    * @param enclosure The enclosure to set
    */
   public void setEnclosure( String enclosure ) {
     this.enclosure = enclosure;
+  }
+
+  /**
+   * Gets filePath
+   *
+   * @return value of filePath
+   */
+  public String getFilePath() { return filePath; }
+
+  /**
+   * @param enclosure The enclosure to set
+   */
+  public void setFilePath( String filePath ) {
+    this.filePath = filePath;
   }
 }
