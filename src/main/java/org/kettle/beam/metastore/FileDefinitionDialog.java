@@ -35,6 +35,7 @@ public class FileDefinitionDialog {
   private static Class<?> PKG = FileDefinitionDialog.class; // for i18n purposes, needed by Translator2!!
 
   private FileDefinition fileDefinition;
+  private FileGetFields fileGetFields = new FileGetFields();
 
   private Shell parent;
   private Shell shell;
@@ -310,9 +311,8 @@ public class FileDefinitionDialog {
   }
 
   private void getFields() {
-
-    System.out.println(wFilePath.getText());
-    System.out.println(wEnclosure.getText());
+    
+    fileGetFields.process(wFilePath.getText(), wEnclosure.getText());
 
   }
 
