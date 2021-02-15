@@ -16,13 +16,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.BeamDefaults;
+import org.kettle.beam.core.util.Web;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
@@ -161,6 +164,24 @@ public class BeamTimestampDialog extends BaseStepDialog implements StepDialogInt
     return stepname;
   }
 
+  /**
+   * Método responsável por criar e o botão de ajuda que quando clicado
+   * abre uma pagína de ajuda para o componente.
+   *
+   * @param shell
+   * @param stepMeta
+   * @param plugin
+   * @return
+   */
+  @Override
+  protected Button createHelpButton(Shell shell, StepMeta stepMeta, PluginInterface plugin) {
+    Button helpButton = new Button(shell, SWT.PUSH);
+    helpButton.setText(BaseMessages.getString( PKG, "BeamTimestampDialog.HelpButton" ));
+    helpButton.addListener(SWT.Selection, e ->
+            Web.open(this, BaseMessages.getString( PKG, "BeamTimestampDialog.HelpLink" ))
+    );
+    return helpButton;
+  }
 
   /**
    * Populate the widgets.
