@@ -74,8 +74,6 @@ public class BeamInput extends BaseStep implements StepInterface {
     if(file == null){throw new KettleException("Arquivo não acessado.");}
     try {
 
-
-
     }catch (Exception ex){
       throw new KettleException(ex.getMessage(), ex);
     }

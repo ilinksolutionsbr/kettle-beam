@@ -23,6 +23,8 @@ import java.util.Set;
 
 public class BeamConst {
 
+  public static final String STRING_JOB_ENTRY_DATAFLOW_RUNNER_PLUGIN_ID = "DataFlowRunnerJobEntry";
+
   public static final String STRING_BEAM_INPUT_PLUGIN_ID = "BeamInput";
   public static final String STRING_BEAM_OUTPUT_PLUGIN_ID = "BeamOutput";
   public static final String STRING_BEAM_SUBSCRIBE_PLUGIN_ID = "BeamSubscribe";

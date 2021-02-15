@@ -117,7 +117,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
 
       BigQueryIO.Write.WriteDisposition writeDisposition;
       if (truncateTable) {
-        writeDisposition = BigQueryIO.Write.WriteDisposition.WRITE_APPEND;
+        writeDisposition = BigQueryIO.Write.WriteDisposition.WRITE_TRUNCATE;
       } else {
         if (failIfNotEmpty) {
           writeDisposition = BigQueryIO.Write.WriteDisposition.WRITE_EMPTY;
