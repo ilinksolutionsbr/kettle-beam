@@ -6,21 +6,34 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import org.kettle.beam.util.DateFormat;
+import org.pentaho.di.core.exception.KettleAuthException;
+import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.i18n.BaseMessages;
 
+/**
+ * @Autor Igor Brandorff - Callink
+ */
 public class FileGetFields {
+
+    private static Class<?> PKG = FileDefinitionDialog.class; // for i18n purposes, needed by Translator2!!
 
     public FileGetFields() {
     }
 
-    public List<FieldsMetadata> process(String path, String delimiter){
+    public List<FieldsMetadata> process(String path, String delimiter) throws Exception {
 
         List<FieldsMetadata> metadata = new ArrayList();
 
-        try {
-            metadata = verificaArquivo(path, delimiter);
-        } catch (Exception e) {
-            metadata = null;
-            e.printStackTrace();
+        if(delimiter.isEmpty()){
+        throw new Exception("O campo " + BaseMessages.getString(PKG,"FileDefinitionDialog.Separator.Label") + " está vazio. " +
+                "Preencha para Obter os campos.");
+        } else {
+            if(path.isEmpty()){
+                throw new Exception("O campo " + BaseMessages.getString(PKG,"FileDefinitionDialog.FilePath.Label") + " está vazio. " +
+                        "Preencha para Obter os campos.");
+            } else {
+                metadata = verificaArquivo(path, delimiter);
+            }
         }
 
         return metadata;
@@ -34,7 +47,7 @@ public class FileGetFields {
         File file = new File(filePath);
         if(file.exists()){
             if(file.length() == 0){
-                Exception ex = new Exception("O arquivo informado está vazio");
+                Exception ex = new KettleException("O arquivo informado está vazio");
                 throw ex;
             } else {
                 BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -62,15 +75,16 @@ public class FileGetFields {
                     }
 
                 } else {
-                    Exception ex = new Exception("A quantidade de colunas/itens do cabeçalho não é igual a quantidade de colunas da segunda linha do arquivo.");
+                    Exception ex = new KettleException("" +
+                            "A quantidade de colunas/itens do cabeçalho é divergente da quantidade de colunas encontradas nos dados. " +
+                            "Verifique se o arquivo possui a mesma quantidade de colunas no cabeçalho e na primeira linha de dados.");
                     throw ex;
                 }
             }
         } else {
-            Exception ex = new Exception("O arquivo do caminho informado não existe. Insira o caminho absoluto do arquivo incluindo sua extensão.");
+            Exception ex = new KettleAuthException("O arquivo informado não existe. Insira o caminho absoluto do arquivo incluindo sua extensão no campo");
             throw ex;
         }
-
         //Return 'columns' to header names
         //Return 'types' to data types of each column
         return metadata;
@@ -133,5 +147,4 @@ public class FileGetFields {
         }
         return type;
     }
-
 }

@@ -22,6 +22,7 @@ import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.ui.core.PropsUI;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.core.gui.WindowProperty;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
@@ -312,14 +313,18 @@ public class FileDefinitionDialog {
   private void getFields() {
 
     List<FieldsMetadata> metadata = new ArrayList();
-    metadata = fileGetFields.process(wFilePath.getText(), wEnclosure.getText());
+    try {
+      metadata = fileGetFields.process(wFilePath.getText(), wSeparator.getText());
 
-    for (int i=0; i<metadata.size(); i++){
-      System.out.println("A " + metadata.get(i).getName() + " " + metadata.get(i).getType());
-      String[] fields = new String[2];
-      fields[0] = metadata.get(i).getName();
-      fields[1] = metadata.get(i).getType();
-      wFields.add(fields);
+      for (int i=0; i<metadata.size(); i++){
+        String[] fields = new String[2];
+        fields[0] = metadata.get(i).getName();
+        fields[1] = metadata.get(i).getType();
+        wFields.add(fields);
+      }
+
+    } catch (Exception e) {
+      SimpleMessageDialog.openWarning(this.shell, "Aviso", e.getMessage());
     }
   }
 
