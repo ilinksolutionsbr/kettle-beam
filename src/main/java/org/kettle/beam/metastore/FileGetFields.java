@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import org.kettle.beam.util.DateFormat;
 
 public class FileGetFields {
@@ -14,15 +12,23 @@ public class FileGetFields {
     public FileGetFields() {
     }
 
-    public void process(String path, String delimiter){
+    public List<FieldsMetadata> process(String path, String delimiter){
+
+        List<FieldsMetadata> metadata = new ArrayList();
+
         try {
-            verificaArquivo(path, delimiter);
+            metadata = verificaArquivo(path, delimiter);
         } catch (Exception e) {
+            metadata = null;
             e.printStackTrace();
         }
+
+        return metadata;
     }
 
-    public void verificaArquivo(String filePath, String delimiter) throws Exception {
+    public List<FieldsMetadata> verificaArquivo(String filePath, String delimiter) throws Exception {
+
+        List<FieldsMetadata> metadata = new ArrayList();
 
         //Receber um arquivo
         File file = new File(filePath);
@@ -49,11 +55,12 @@ public class FileGetFields {
                         dataTypes.set(i, typeIdentifier(dataTypes.get(i)));
                     }
 
-                    //TODO REMOVER
-                    for(int j = 0; j<dataTypes.size(); j++){
-                        System.out.println(columns.get(j) + " " + dataTypes.get(j));
+                    //Criando pares de valores
+                    for(int i=0; i<columns.size(); i++){
+                        FieldsMetadata meta = new FieldsMetadata(columns.get(i), dataTypes.get(i));
+                        metadata.add(meta);
                     }
-                    //TODO FIM
+
                 } else {
                     Exception ex = new Exception("A quantidade de colunas/itens do cabeçalho não é igual a quantidade de colunas da segunda linha do arquivo.");
                     throw ex;
@@ -65,7 +72,8 @@ public class FileGetFields {
         }
 
         //Return 'columns' to header names
-        //Return 'dataTypes' to data types of each column
+        //Return 'types' to data types of each column
+        return metadata;
     }
 
     public String typeIdentifier(String itemToIdentify){

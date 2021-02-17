@@ -27,8 +27,7 @@ import org.pentaho.di.ui.core.gui.WindowProperty;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
-
-import java.util.List;
+import java.util.*;
 
 public class FileDefinitionDialog {
 
@@ -311,9 +310,17 @@ public class FileDefinitionDialog {
   }
 
   private void getFields() {
-    
-    fileGetFields.process(wFilePath.getText(), wEnclosure.getText());
 
+    List<FieldsMetadata> metadata = new ArrayList();
+    metadata = fileGetFields.process(wFilePath.getText(), wEnclosure.getText());
+
+    for (int i=0; i<metadata.size(); i++){
+      System.out.println("A " + metadata.get(i).getName() + " " + metadata.get(i).getType());
+      String[] fields = new String[2];
+      fields[0] = metadata.get(i).getName();
+      fields[1] = metadata.get(i).getType();
+      wFields.add(fields);
+    }
   }
 
   // Get dialog info in securityService
