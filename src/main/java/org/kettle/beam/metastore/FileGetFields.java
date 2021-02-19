@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import org.kettle.beam.util.BeamConst;
 import org.kettle.beam.util.DateFormat;
 import org.pentaho.di.core.exception.KettleAuthException;
 import org.pentaho.di.core.exception.KettleException;
@@ -92,18 +94,18 @@ public class FileGetFields {
 
     public String typeIdentifier(String itemToIdentify){
 
-        String type = "String";
+        String type = BeamConst.FILE_GET_FIELDS_TYPE_STRING;
 
         //Identify Boolean Type
         if(itemToIdentify.equalsIgnoreCase("true") || itemToIdentify.equalsIgnoreCase("false")){
-            type = "Boolean";
+            type = BeamConst.FILE_GET_FIELDS_TYPE_BOOLEAN;
 
             return type;
         }
 
         //Identify Boolean Type
         if(itemToIdentify.equalsIgnoreCase("1") || itemToIdentify.equalsIgnoreCase("0")){
-            type = "Binary";
+            type = BeamConst.FILE_GET_FIELDS_TYPE_BINARY;
 
             return type;
         }
@@ -111,7 +113,7 @@ public class FileGetFields {
         //Convert to int
         try {
             Integer.parseInt(itemToIdentify);
-            type = "Integer";
+            type = BeamConst.FILE_GET_FIELDS_TYPE_INTEGER;
             return type;
         } catch(Exception e) { //Nothing to do
         }
@@ -119,7 +121,7 @@ public class FileGetFields {
         //Convert to double
         try {
             Double.parseDouble(itemToIdentify);
-            type = "Number";
+            type = BeamConst.FILE_GET_FIELDS_TYPE_NUMBER;
             return type;
         } catch(Exception e) { //Nothing to do
         }
@@ -128,7 +130,7 @@ public class FileGetFields {
         for(String a : DateFormat.timestampTypes){
             try {
                 Date date = new SimpleDateFormat(a).parse(itemToIdentify);
-                type = "Timestamp";
+                type = BeamConst.FILE_GET_FIELDS_TYPE_TIMESTAMP;
                 return type;
             } catch (Exception e){
                 //Nothing to do
@@ -139,7 +141,7 @@ public class FileGetFields {
         for(String a : DateFormat.datatypes){
             try {
                 Date date = new SimpleDateFormat(a).parse(itemToIdentify);
-                type = "Date";
+                type = BeamConst.FILE_GET_FIELDS_TYPE_DATE;
                 return type;
             } catch (Exception e){
                 //Nothing to do
