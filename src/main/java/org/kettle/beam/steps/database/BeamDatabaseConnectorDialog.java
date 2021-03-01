@@ -533,6 +533,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
         ResultSet resultSet = preparedStatement.executeQuery();
 
+        //Rollback para que não ocorra problemas
         connection.rollback();
 
         return resultSet;
