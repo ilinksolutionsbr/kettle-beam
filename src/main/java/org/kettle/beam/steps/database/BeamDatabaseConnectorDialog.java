@@ -1,5 +1,6 @@
 package org.kettle.beam.steps.database;
 
+import com.google.cloud.Tuple;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.FormAttachment;
@@ -30,6 +31,7 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 
 /**
@@ -483,11 +485,13 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
         if(queryIsSelect){
             try {
-
-                String modifiedQuery = "SELECT m.* from(" + txtQuery.getText() + ") AS m LIMIT 1;";
+                //Removendo ponto e vírgula final caso haja
+                String sql = txtQuery.getText().replaceAll(";", "");
+                String modifiedQuery = "SELECT m.* from(" + sql + ") AS m LIMIT 1;";
 
                 ResultSet result = this.executeGetFieldsQuery(modifiedQuery, cboDatabase.getText(), txtConnectionString.getText(), txtUsername.getText(), txtPassword.getText());
 
+                //Recuperando a informação dos metadados - nome da coluna e tipo, para criar os retornos
                 ResultSetMetaData metadata = result.getMetaData();
                 for (int i = 1; i <= metadata.getColumnCount(); i++){
                     String[] fields = new String[3];
@@ -530,6 +534,14 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         connection = DriverManager.getConnection(connectionString, username, password);
         connection.setAutoCommit(false);
         preparedStatement = connection.prepareStatement(sql);
+
+        //iNSERINDO PARÂMETROS NULOS CASO EXISTAM, APENAS PARA RECEBER OS METADADOS DO RESULTADO
+        if(parameters.size() > 0) {
+            for(int i = 0; i<parameters.size(); i++){
+                preparedStatement.setNull(i+1, Types.VARCHAR);
+            }
+
+        }
 
         ResultSet resultSet = preparedStatement.executeQuery();
 
