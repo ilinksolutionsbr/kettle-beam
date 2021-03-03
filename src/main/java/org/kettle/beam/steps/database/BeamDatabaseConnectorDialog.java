@@ -486,13 +486,13 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         if(queryIsSelect){
             try {
                 //Removendo ponto e vírgula final caso haja
-                String sql = txtQuery.getText().replaceAll(";", "");
-                String modifiedQuery = "SELECT m.* from(" + sql + ") AS m LIMIT 1;";
+                String sql = txtQuery.getText();
 
-                ResultSet result = this.executeGetFieldsQuery(modifiedQuery, cboDatabase.getText(), txtConnectionString.getText(), txtUsername.getText(), txtPassword.getText());
+                ResultSet result = this.executeGetFieldsQuery(sql, cboDatabase.getText(), txtConnectionString.getText(), txtUsername.getText(), txtPassword.getText());
 
                 //Recuperando a informação dos metadados - nome da coluna e tipo, para criar os retornos
                 ResultSetMetaData metadata = result.getMetaData();
+                tblFields.clearAll();
                 for (int i = 1; i <= metadata.getColumnCount(); i++){
                     String[] fields = new String[3];
                     fields[0] = metadata.getColumnName(i);
