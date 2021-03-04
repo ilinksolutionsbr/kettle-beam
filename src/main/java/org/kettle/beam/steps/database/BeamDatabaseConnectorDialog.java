@@ -1,9 +1,8 @@
 package org.kettle.beam.steps.database;
 
+import com.google.cloud.Tuple;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -14,7 +13,8 @@ import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.plugins.PluginInterface;
-import org.pentaho.di.core.row.value.ValueMetaFactory;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.*;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
@@ -29,7 +29,10 @@ import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.core.widget.PasswordTextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.Map;
+
 
 /**
  * Classe responsável por criar a janela de configuração do step
@@ -270,13 +273,11 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
         this.wOK = new Button( this.shell, SWT.PUSH );
         this.wOK.setText( BaseMessages.getString( PACKAGE, "System.Button.OK" ) );
-        //this.wGet = new Button(this.shell, SWT.PUSH);
-        //this.wGet.setText(BaseMessages.getString( PACKAGE, "System.Button.GetFields" ) );
+        this.wGet = new Button(this.shell, SWT.PUSH);
+        this.wGet.setText(BaseMessages.getString( PACKAGE, "System.Button.GetFields" ) );
         this.wCancel = new Button( this.shell, SWT.PUSH );
         this.wCancel.setText( BaseMessages.getString( PACKAGE, "System.Button.Cancel" ) );
-        this.setButtonPositions( new Button[] { this.wOK, this.wCancel }, this.margin, null );
-        //this.setButtonPositions( new Button[] { this.wOK, this.wGet, this.wCancel }, this.margin, null );
-
+        this.setButtonPositions( new Button[] { this.wOK, this.wGet, this.wCancel }, this.margin, null );
 
 
         this.lblFields = new Label( shell, SWT.LEFT );
@@ -308,7 +309,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         this.lsCancel = e -> this.cancel();
 
         this.wOK.addListener( SWT.Selection, this.lsOK );
-        //this.wGet.addListener( SWT.Selection, e-> this.getFields() );
+        this.wGet.addListener( SWT.Selection, e-> this.getFields() );
         this.wCancel.addListener( SWT.Selection, this.lsCancel );
 
         this.lsDef = new SelectionAdapter() {
@@ -363,10 +364,6 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
                 Web.open(this, BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.HelpLink" ))
         );
         return helpButton;
-    }
-
-    public void getFields() {
-        //TODO: Implementar consulta na base para trazer a estrutura da tabela
     }
 
     public void getData( ) {
@@ -435,21 +432,11 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
     private void ok() {
         try {
-            if (Utils.isEmpty(wStepname.getText())) {return;}
-            if (Strings.isNullOrEmpty(cboDatabase.getText())) {throw new Exception("Banco de dados nao informado.");}
-            if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(cboDatabase.getText())) {throw new Exception("Banco de dados invalido.");}
-            if (Strings.isNullOrEmpty(txtConnectionString.getText())) {throw new Exception("URL de conexão nao informado.");}
-            if (Strings.isNullOrEmpty(txtUsername.getText())) {throw new Exception("Usuario nao informado.");}
-            if (Strings.isNullOrEmpty(txtPassword.getText())) {throw new Exception("Senha nao informado.");}
-            if (Strings.isNullOrEmpty(cboQueryType.getText())) {throw new Exception("Tipo de query nao informado.");}
-            if (!BeamDatabaseConnectorHelper.getInstance().getQueryTypes().containsKey(cboQueryType.getText())) {throw new Exception("Tipo de query invalido.");}
-            if (Strings.isNullOrEmpty(txtQuery.getText())) {throw new Exception("Query nao informado.");}
+            this.checkFields();
             getInfo(metadata);
             dispose();
-
         }catch (Exception ex){
             SimpleMessageDialog.openWarning(shell, "Aviso", ex.getMessage());
-
         }
     }
 
@@ -481,6 +468,88 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         metadata.setChanged();
     }
 
+    public void getFields() {
+
+        boolean queryIsSelect = false;
+
+        try{
+            this.checkFields();
+            if(cboQueryType.getText().equalsIgnoreCase(BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT)){
+                queryIsSelect = true;
+            } else {
+                throw new Exception("Só é necessário Obter Campos quando o Tipo selecionado for " + BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT);
+            }
+        } catch (Exception ex){
+            SimpleMessageDialog.openWarning(shell, "Aviso", ex.getMessage());
+        }
+
+        if(queryIsSelect){
+            try {
+                //Removendo ponto e vírgula final caso haja
+                String sql = txtQuery.getText();
+
+                ResultSet result = this.executeGetFieldsQuery(sql, cboDatabase.getText(), txtConnectionString.getText(), txtUsername.getText(), txtPassword.getText());
+
+                //Recuperando a informação dos metadados - nome da coluna e tipo, para criar os retornos
+                ResultSetMetaData metadata = result.getMetaData();
+                tblFields.clearAll();
+                for (int i = 1; i <= metadata.getColumnCount(); i++){
+                    String[] fields = new String[3];
+                    fields[0] = metadata.getColumnName(i);
+                    fields[1] = "";
+                    ValueMetaInterface typeName = BeamDatabaseConnectorHelper.createValueMeta(metadata.getColumnName(i), metadata.getColumnType(i));
+                    fields[2] = typeName.getTypeDesc();
+                    tblFields.add(fields);
+                }
+
+            } catch (Exception ex) {
+                SimpleMessageDialog.openWarning(shell, "Aviso", "Erro encontrado: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void checkFields() throws Exception {
+
+        if (Utils.isEmpty(wStepname.getText())) {return;}
+        if (Strings.isNullOrEmpty(cboDatabase.getText())) {throw new Exception("Banco de dados nao informado.");}
+        if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(cboDatabase.getText())) {throw new Exception("Banco de dados invalido.");}
+        if (Strings.isNullOrEmpty(txtConnectionString.getText())) {throw new Exception("URL de conexão nao informado.");}
+        if (Strings.isNullOrEmpty(txtUsername.getText())) {throw new Exception("Usuario nao informado.");}
+        if (Strings.isNullOrEmpty(txtPassword.getText())) {throw new Exception("Senha nao informado.");}
+        if (Strings.isNullOrEmpty(cboQueryType.getText())) {throw new Exception("Tipo de query nao informado.");}
+        if (!BeamDatabaseConnectorHelper.getInstance().getQueryTypes().containsKey(cboQueryType.getText())) {throw new Exception("Tipo de query invalido.");}
+        if (Strings.isNullOrEmpty(txtQuery.getText())) {throw new Exception("Query nao informado.");}
+    }
+
+    public ResultSet executeGetFieldsQuery(String sql, String database, String connectionString, String username, String password) throws SQLException, ClassNotFoundException {
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        String driver = BeamDatabaseConnectorHelper.getInstance().getDriver(database);
+
+        java.util.List<String> parameters = new ArrayList<>();
+        sql = BeamDatabaseConnectorHelper.getInstance().prepareSQL(sql, parameters);
+
+        Class.forName(driver);
+        connection = DriverManager.getConnection(connectionString, username, password);
+        connection.setAutoCommit(false);
+        preparedStatement = connection.prepareStatement(sql);
+
+        //iNSERINDO PARÂMETROS NULOS CASO EXISTAM, APENAS PARA RECEBER OS METADADOS DO RESULTADO
+        if(parameters.size() > 0) {
+            for(int i = 0; i<parameters.size(); i++){
+                preparedStatement.setNull(i+1, Types.VARCHAR);
+            }
+
+        }
+
+        ResultSet resultSet = preparedStatement.executeQuery();
+
+        //Rollback para que não ocorra problemas
+        connection.rollback();
+
+        return resultSet;
+    }
 
     //endregion
 
