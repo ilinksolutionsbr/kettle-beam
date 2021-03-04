@@ -54,7 +54,7 @@ public class BeamInputStepHandler extends BeamBaseStepHandler implements BeamSte
               stepMeta.getName(),
               stepMeta.getName(),
               fileInputLocation,
-              transMeta.environmentSubstitute( Strings.isNullOrEmpty(inputFileDefinition.getSeparator()) ? "" : inputFileDefinition.getSeparator() ),
+              transMeta.environmentSubstitute( inputFileDefinition.getSeparator() ),
               JsonRowMeta.toJson( fileRowMeta ),
               stepPluginClasses,
               xpPluginClasses
