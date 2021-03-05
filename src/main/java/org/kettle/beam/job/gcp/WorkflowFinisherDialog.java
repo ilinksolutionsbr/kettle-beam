@@ -1,4 +1,4 @@
-package org.kettle.beam.job.dataflow;
+package org.kettle.beam.job.gcp;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
@@ -6,6 +6,7 @@ import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
+import org.kettle.beam.core.util.Strings;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
@@ -15,6 +16,7 @@ import org.pentaho.di.job.entry.JobEntryDialogInterface;
 import org.pentaho.di.job.entry.JobEntryInterface;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.ui.core.PropsUI;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.core.gui.WindowProperty;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -22,27 +24,27 @@ import org.pentaho.di.ui.job.dialog.JobDialog;
 import org.pentaho.di.ui.job.entry.JobEntryDialog;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
-public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDialogInterface {
+public class WorkflowFinisherDialog extends JobEntryDialog implements JobEntryDialogInterface {
 
-    private static Class<?> PKG = DataFlowRunnerDialog.class;
+    private static Class<?> PKG = WorkflowFinisherDialog.class;
 
     private Text wName;
-    private TextVar wJobName;
+    private TextVar wReturnValue;
 
     private Button wOK;
     private Button wCancel;
 
     private VariableSpace space;
 
-    private DataFlowRunnerMeta meta;
+    private WorkflowFinisherMeta meta;
 
     private boolean changed;
 
     private int margin;
 
-    public DataFlowRunnerDialog(Shell parent, JobEntryInterface jobEntryInterface, Repository repository, JobMeta jobMeta ) {
+    public WorkflowFinisherDialog(Shell parent, JobEntryInterface jobEntryInterface, Repository repository, JobMeta jobMeta ) {
         super( parent, jobEntryInterface, repository, jobMeta );
-        meta = (DataFlowRunnerMeta)jobEntryInt;
+        meta = (WorkflowFinisherMeta)jobEntryInterface;
         this.parent = parent;
         props = PropsUI.getInstance();
 
@@ -50,7 +52,7 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
         space.initializeVariablesFrom( null );
 
         if ( this.meta.getName() == null ) {
-            this.meta.setName( BaseMessages.getString( PKG, "DataFlowRunnerDialog.Default.Name" ) );
+            this.meta.setName( BaseMessages.getString( PKG, "WorkflowFinishDialog.Default.Name" ) );
         }
     }
 
@@ -70,7 +72,7 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
         formLayout.marginWidth = Const.FORM_MARGIN;
         formLayout.marginHeight = Const.FORM_MARGIN;
 
-        shell.setText( BaseMessages.getString( PKG, "DataFlowRunnerDialog.Shell.Title" ) );
+        shell.setText( BaseMessages.getString( PKG, "WorkflowFinishDialog.Shell.Title" ) );
         shell.setLayout( formLayout );
 
 
@@ -95,7 +97,7 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
 
         Label wlName = new Label( shell, SWT.RIGHT );
         props.setLook( wlName );
-        wlName.setText( BaseMessages.getString( PKG, "DataFlowRunnerDialog.Name" ) );
+        wlName.setText( BaseMessages.getString( PKG, "WorkflowFinishDialog.Name" ) );
         FormData fdlName = new FormData();
         fdlName.top = new FormAttachment( 0, margin );
         fdlName.left = new FormAttachment( 0, -margin );
@@ -111,26 +113,26 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
         wName.setLayoutData( fdName );
         Control lastControl = wName;
 
-        Label wlJobName = new Label( shell, SWT.RIGHT );
-        wlJobName.setText( BaseMessages.getString( PKG, "DataFlowRunnerDialog.JobName" ) );
-        props.setLook( wlJobName );
-        FormData fdlProjectId = new FormData();
-        fdlProjectId.left = new FormAttachment( 0, 0 );
-        fdlProjectId.top = new FormAttachment( lastControl, margin );
-        fdlProjectId.right = new FormAttachment( middle, -margin );
-        wlJobName.setLayoutData( fdlProjectId );
-        wJobName = new TextVar( jobMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-        props.setLook( wJobName );
-        FormData fdProjectId = new FormData();
-        fdProjectId.left = new FormAttachment( middle, 0 );
-        fdProjectId.top = new FormAttachment( wlJobName, 0, SWT.CENTER );
-        fdProjectId.right = new FormAttachment( 100, 0 );
-        wJobName.setLayoutData( fdProjectId );
-        lastControl = wJobName;
+        Label wlReturnValue = new Label( shell, SWT.RIGHT );
+        wlReturnValue.setText( BaseMessages.getString( PKG, "WorkflowFinishDialog.ReturnValue" ) );
+        props.setLook( wlReturnValue );
+        FormData fdlReturnValue = new FormData();
+        fdlReturnValue.left = new FormAttachment( 0, 0 );
+        fdlReturnValue.top = new FormAttachment( lastControl, margin );
+        fdlReturnValue.right = new FormAttachment( middle, -margin );
+        wlReturnValue.setLayoutData( fdlReturnValue );
+        wReturnValue = new TextVar( jobMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        props.setLook( wReturnValue );
+        FormData fdReturnValue = new FormData();
+        fdReturnValue.left = new FormAttachment( middle, 0 );
+        fdReturnValue.top = new FormAttachment( wlReturnValue, 0, SWT.CENTER );
+        fdReturnValue.right = new FormAttachment( 95, 0 );
+        wReturnValue.setLayoutData( fdReturnValue );
+        lastControl = wReturnValue;
 
 
         wName.addSelectionListener( selAdapter );
-        wJobName.addSelectionListener( selAdapter );
+        wReturnValue.addSelectionListener( selAdapter );
 
 
         meta.setChanged( changed );
@@ -164,7 +166,7 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
 
     public void getData() {
         wName.setText(Const.NVL(meta.getName(), ""));
-        wJobName.setText(Const.NVL(meta.getJobName(), ""));
+        wReturnValue.setText(Const.NVL(meta.getReturnValue(), ""));
         wName.selectAll();
     }
 
@@ -175,9 +177,17 @@ public class DataFlowRunnerDialog extends JobEntryDialog implements JobEntryDial
     }
 
     private void ok() {
-        meta.setName( wName.getText() );
-        meta.setJobName( wJobName.getText() );
-        meta.setChanged();
-        dispose();
+        try {
+            if (Strings.isNullOrEmpty(wName.getText())) {throw new Exception("Nome não informado.");}
+            if (Strings.isNullOrEmpty(wReturnValue.getText()) ) {throw new Exception("Valor de retorno nao informado.");}
+            meta.setName( wName.getText() );
+            meta.setReturnValue( wReturnValue.getText() );
+            meta.setChanged();
+            dispose();
+
+        }catch (Exception ex){
+            SimpleMessageDialog.openWarning(this.shell, "Aviso", ex.getMessage());
+
+        }
     }
 }

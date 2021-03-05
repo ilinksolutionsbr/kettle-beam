@@ -140,6 +140,7 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
                 case ValueMetaInterface.TYPE_NONE: tuple = Tuple.of(this.getInputRowMeta().getString(row, i), Types.BINARY); break;
                 case ValueMetaInterface.TYPE_SERIALIZABLE: tuple = Tuple.of(this.getInputRowMeta().getString(row, i), Types.BINARY); break;
             }
+
             if(tuple != null) {
                 dataSet.put(field, tuple);
             }

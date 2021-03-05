@@ -52,6 +52,8 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
+import org.kettle.beam.core.util.Strings;
+import org.kettle.beam.job.pipeline.JobPipeline;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.BeamJobConfigDialog;
 import org.kettle.beam.metastore.FileDefinition;
@@ -73,12 +75,15 @@ import org.pentaho.di.core.plugins.KettleURLClassLoader;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.job.JobHopMeta;
+import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.spoon.ISpoonMenuController;
 import org.pentaho.di.ui.spoon.Spoon;
+import org.pentaho.di.ui.spoon.job.JobGraph;
 import org.pentaho.di.ui.spoon.trans.TransGraph;
 import org.pentaho.metastore.api.IMetaStore;
 import org.pentaho.metastore.persist.MetaStoreFactory;
@@ -585,6 +590,45 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
 
   public void clearSingleThreaded() {
     setCurrentStepBeamFlag(BeamConst.STRING_STEP_FLAG_SINGLE_THREADED, "false");
+  }
+
+
+  public void generateWorkflowYAML(){
+    final Shell shell = Spoon.getInstance().getShell();
+
+    try {
+      JobMeta jobMeta = spoon.getActiveJob();
+
+      if (jobMeta == null) {
+        showMessage("Aviso", "Para gerar o YAML do GCP Workflow, precisa estar com o JOB aberto e em exibição na tela.");
+        return;
+      }
+
+      FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+      dialog.setText("Selecione o local do YAML.");
+      dialog.setFilterNames(new String[]{"YAML files (*.yaml)", "All Files (*.*)"});
+      dialog.setFilterExtensions(new String[]{"*.yaml", "*.*"}); // Windows
+      dialog.setFileName(jobMeta.getName() + ".yaml");
+
+      String filename = dialog.open();
+      if (Strings.isNullOrEmpty(filename)) {
+        return;
+      }
+
+      JobPipeline pipeline = new JobPipeline(jobMeta);
+      String yaml = pipeline.toGcpYAML();
+
+      FileOutputStream fileOutputStream = new FileOutputStream(filename);
+      fileOutputStream.write(yaml.getBytes("UTF-8"));
+      fileOutputStream.flush();
+      fileOutputStream.close();
+
+      showMessage("Sucesso", "YAML gerado com sucesso.");
+
+    }catch (Exception ex){
+      new KettleErrorDialog( shell, "Error", ex.getMessage(), ex );
+
+    }
   }
 
 }

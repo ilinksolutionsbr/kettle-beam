@@ -9,6 +9,7 @@ import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.util.JsonRowMeta;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,10 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
   private String leftKRowMetaJson;
   private String leftVRowMetaJson;
   private String rightVRowMetaJson;
+
+  private String leftRowMetaJson;
+  private String rightRowMetaJson;
+
   private String counterName;
   private List<String> stepPluginClasses;
   private List<String>xpPluginClasses;
@@ -31,6 +36,9 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
   private transient RowMetaInterface leftVRowMeta;
   private transient RowMetaInterface rightVRowMeta;
 
+  private transient RowMetaInterface leftRowMeta;
+  private transient RowMetaInterface rightRowMeta;
+
   private transient Counter initCounter;
   private transient Counter writtenCounter;
   private transient Counter errorCounter;
@@ -38,12 +46,17 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
   public AssemblerFn() {
   }
 
-  public AssemblerFn( String outputRowMetaJson, String leftKRowMetaJson, String leftVRowMetaJson, String rightVRowMetaJson, String counterName,
-                      List<String> stepPluginClasses, List<String>xpPluginClasses) {
+  public AssemblerFn( String outputRowMetaJson, String leftKRowMetaJson, String leftVRowMetaJson, String rightVRowMetaJson,
+                      String leftRowMetaJson, String rightRowMetaJson,
+                      String counterName, List<String> stepPluginClasses, List<String>xpPluginClasses) {
     this.outputRowMetaJson = outputRowMetaJson;
     this.leftKRowMetaJson = leftKRowMetaJson;
     this.leftVRowMetaJson = leftVRowMetaJson;
     this.rightVRowMetaJson = rightVRowMetaJson;
+
+    this.leftRowMetaJson = leftRowMetaJson;
+    this.rightRowMetaJson = rightRowMetaJson;
+
     this.counterName = counterName;
     this.stepPluginClasses = stepPluginClasses;
     this.xpPluginClasses = xpPluginClasses;
@@ -63,6 +76,9 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
       leftVRowMeta = JsonRowMeta.fromJson( leftVRowMetaJson );
       rightVRowMeta = JsonRowMeta.fromJson( rightVRowMetaJson );
 
+      leftRowMeta = JsonRowMeta.fromJson( leftRowMetaJson );
+      rightRowMeta = JsonRowMeta.fromJson( rightRowMetaJson );
+
       Metrics.counter( "init", counterName ).inc();
     } catch(Exception e) {
       errorCounter.inc();
@@ -71,6 +87,91 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
     }
   }
 
+  //TODO: novo
+  @ProcessElement
+  public void processElement( ProcessContext processContext ) {
+
+    try {
+
+      KV<KettleRow, KV<KettleRow, KettleRow>> element = processContext.element();
+      KV<KettleRow, KettleRow> value = element.getValue();
+
+      KettleRow key = element.getKey();
+      KettleRow leftValue = value.getKey();
+      KettleRow rightValue = value.getValue();
+
+      Object[] outputRow = RowDataUtil.allocateRowData( leftRowMeta.size() +  rightRowMeta.size());
+      int rowIndex = 0;
+      int keyIndex;
+      int valueIndex = 0;
+      Object rowValue;
+      boolean isKey;
+
+      //Inclui os dados da esquerda
+      if(!leftValue.allNull()) {
+        for (ValueMetaInterface valueMeta : leftRowMeta.getValueMetaList()) {
+          keyIndex = 0;
+          rowValue = null;
+          isKey = false;
+
+          for (ValueMetaInterface keyValueMeta : leftKRowMeta.getValueMetaList()) {
+            if (valueMeta.getName().equalsIgnoreCase(keyValueMeta.getName())) {
+              rowValue = key.getRow()[keyIndex];
+              isKey = true;
+              break;
+            }
+            keyIndex++;
+          }
+
+          if (!isKey) {
+            rowValue = leftValue.getRow()[valueIndex++];
+          }
+
+          outputRow[rowIndex++] = rowValue;
+        }
+      }else{
+        rowIndex += leftRowMeta.getValueMetaList().size();
+      }
+
+      //Inclui os dados da direita
+      if(!rightValue.allNull()) {
+        valueIndex = 0;
+        for (ValueMetaInterface valueMeta : rightRowMeta.getValueMetaList()) {
+          keyIndex = 0;
+          rowValue = null;
+          isKey = false;
+
+          for (ValueMetaInterface keyValueMeta : leftKRowMeta.getValueMetaList()) {
+            if (valueMeta.getName().equalsIgnoreCase(keyValueMeta.getName())) {
+              rowValue = key.getRow()[keyIndex];
+              isKey = true;
+              break;
+            }
+            keyIndex++;
+          }
+
+          if (!isKey) {
+            rowValue = rightValue.getRow()[valueIndex++];
+          }
+
+          outputRow[rowIndex++] = rowValue;
+        }
+      }else{
+        rowIndex += rightRowMeta.getValueMetaList().size();
+      }
+
+      //Processa os dados
+      processContext.output( new KettleRow( outputRow ) );
+      writtenCounter.inc();
+
+    } catch(Exception e) {
+      errorCounter.inc();
+      LOG.error( "Error assembling rows", e);
+      throw new RuntimeException( "Error assembling output KV<row, KV<row, row>>", e );
+    }
+  }
+
+/*
   @ProcessElement
   public void processElement( ProcessContext processContext ) {
 
@@ -139,5 +240,7 @@ public class AssemblerFn extends DoFn<KV<KettleRow, KV<KettleRow, KettleRow>>, K
       throw new RuntimeException( "Error assembling output KV<row, KV<row, row>>", e );
     }
   }
+*/
+
 }
 

@@ -23,7 +23,8 @@ import java.util.Set;
 
 public class BeamConst {
 
-  public static final String STRING_JOB_ENTRY_DATAFLOW_RUNNER_PLUGIN_ID = "DataFlowRunnerJobEntry";
+  public static final String STRING_JOB_ENTRY_DATAFLOW_RUNNER_PLUGIN_ID = "DataflowRunnerJobEntry";
+  public static final String STRING_JOB_ENTRY_WORKFLOW_FINISHER_PLUGIN_ID = "WorkflowFinisherJobEntry";
 
   public static final String STRING_BEAM_INPUT_PLUGIN_ID = "BeamInput";
   public static final String STRING_BEAM_OUTPUT_PLUGIN_ID = "BeamOutput";
@@ -127,6 +128,14 @@ public class BeamConst {
     String[] descriptions = new String[gcpRegionCodeZonesDescriptions.size()];
     for (int i=0;i<descriptions.length;i++) {
       descriptions[i] = gcpRegionCodeZonesDescriptions.get(i)[2];
+    }
+    return descriptions;
+  }
+
+  public static final String[] getGcpRegionNames() {
+    String[] descriptions = new String[gcpRegionCodeZonesDescriptions.size()];
+    for (int i=0;i<descriptions.length;i++) {
+      descriptions[i] = gcpRegionCodeZonesDescriptions.get(i)[0];
     }
     return descriptions;
   }
