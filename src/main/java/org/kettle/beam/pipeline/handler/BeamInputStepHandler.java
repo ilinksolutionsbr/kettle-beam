@@ -5,6 +5,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.transform.BeamInputTransform;
 import org.kettle.beam.core.util.JsonRowMeta;
+import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.FileDefinition;
 import org.kettle.beam.steps.io.BeamInputMeta;
@@ -20,8 +21,13 @@ import java.util.Map;
 
 public class BeamInputStepHandler extends BeamBaseStepHandler implements BeamStepHandler {
 
-  public BeamInputStepHandler( BeamJobConfig beamJobConfig, IMetaStore metaStore, TransMeta transMeta, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  private String metaStoreJson;
+  private boolean isGenericStep;
+  private BeamGenericStepHandler genericStepHandler;
+
+  public BeamInputStepHandler( BeamJobConfig beamJobConfig, IMetaStore metaStore, String metaStoreJson, TransMeta transMeta, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     super( beamJobConfig, true, false, metaStore, transMeta, stepPluginClasses, xpPluginClasses );
+    this.metaStoreJson = metaStoreJson;
   }
 
   @Override public void handleStep( LogChannelInterface log, StepMeta stepMeta, Map<String, PCollection<KettleRow>> stepCollectionMap,
@@ -41,18 +47,31 @@ public class BeamInputStepHandler extends BeamBaseStepHandler implements BeamSte
     }
     String fileInputLocation = transMeta.environmentSubstitute( beamInputMeta.getInputLocation() );
 
-    BeamInputTransform beamInputTransform = new BeamInputTransform(
-      stepMeta.getName(),
-      stepMeta.getName(),
-      fileInputLocation,
-      transMeta.environmentSubstitute( inputFileDefinition.getSeparator() ),
-      JsonRowMeta.toJson( fileRowMeta ),
-      stepPluginClasses,
-      xpPluginClasses
-    );
-    PCollection<KettleRow> afterInput = pipeline.apply( beamInputTransform );
-    stepCollectionMap.put( stepMeta.getName(), afterInput );
-    log.logBasic( "Handled step (INPUT) : " + stepMeta.getName() );
+    this.isGenericStep = inputFileDefinition.getSeparator() == null || inputFileDefinition.getSeparator().isEmpty();
 
+    if(!this.isGenericStep) {
+      BeamInputTransform beamInputTransform = new BeamInputTransform(
+              stepMeta.getName(),
+              stepMeta.getName(),
+              fileInputLocation,
+              transMeta.environmentSubstitute( inputFileDefinition.getSeparator() ),
+              JsonRowMeta.toJson( fileRowMeta ),
+              stepPluginClasses,
+              xpPluginClasses
+      );
+      PCollection<KettleRow> afterInput = pipeline.apply( beamInputTransform );
+      stepCollectionMap.put( stepMeta.getName(), afterInput );
+      log.logBasic( "Handled step (INPUT) : " + stepMeta.getName() );
+    } else {
+      this.getGenericStepHandler().handleStep(log, stepMeta, stepCollectionMap, pipeline, rowMeta, previousSteps, input);
+    }
   }
+
+  private BeamGenericStepHandler getGenericStepHandler(){
+    if(this.genericStepHandler == null){
+      this.genericStepHandler = new BeamGenericStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses );
+    }
+    return this.genericStepHandler;
+  }
+
 }

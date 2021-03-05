@@ -47,6 +47,13 @@ public class BeamConst {
   public static final String STRING_STEP_FLAG_BATCH = "Batch";
   public static final String STRING_STEP_FLAG_SINGLE_THREADED = "SingleThreaded";
 
+  public static final String FILE_GET_FIELDS_TYPE_STRING = "String";
+  public static final String FILE_GET_FIELDS_TYPE_BOOLEAN = "Boolean";
+  public static final String FILE_GET_FIELDS_TYPE_BINARY = "Binary";
+  public static final String FILE_GET_FIELDS_TYPE_INTEGER = "Integer";
+  public static final String FILE_GET_FIELDS_TYPE_NUMBER = "Number";
+  public static final String FILE_GET_FIELDS_TYPE_TIMESTAMP = "Timestamp";
+  public static final String FILE_GET_FIELDS_TYPE_DATE = "Date";
 
   private static List<String[]> gcpWorkerCodeDescriptions = Arrays.asList(
     new String[] { "n1-standard-1", "Standard machine type with 1 vCPU and 3.75 GB of memory." },

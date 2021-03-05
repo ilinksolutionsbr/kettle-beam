@@ -1,15 +1,6 @@
 package org.kettle.beam.steps.database;
 
-import com.google.api.gax.batching.FlowControlSettings;
 import com.google.cloud.Tuple;
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
-import com.google.cloud.pubsub.v1.MessageReceiver;
-import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.pubsub.v1.PubsubMessage;
-import org.kettle.beam.core.BeamDefaults;
-import org.kettle.beam.core.util.Strings;
-import org.kettle.beam.steps.pubsub.BeamSubscribeData;
-import org.kettle.beam.steps.pubsub.BeamSubscribeMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMeta;
@@ -21,8 +12,6 @@ import org.pentaho.di.trans.step.*;
 
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Classe responsável por execução do step
@@ -220,7 +209,7 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
             for(int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                 columnName = resultSet.getMetaData().getColumnName(i);
                 columnType = resultSet.getMetaData().getColumnType(i);
-                valueMeta = this.createValueMeta(columnName, columnType);
+                valueMeta = BeamDatabaseConnectorHelper.createValueMeta(columnName, columnType);
                 outputRowMeta.addValueMeta(valueMeta);
                 columns.add(columnName);
             }
@@ -238,7 +227,6 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
                 logRowlevel("Beam Database Connector", outputRowMeta.getString(row));
             }
         }
-
     }
 
     private ValueMetaInterface createValueMeta(FieldInfo fieldInfo){
@@ -273,58 +261,6 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
             return new ValueMetaString(fieldInfo.getName());
         }
     }
-
-    private ValueMetaInterface createValueMeta(String name, int type){
-        switch (type){
-            case Types.BIGINT : return new ValueMetaBigNumber(name);
-
-            case Types.BINARY :
-            case Types.BLOB :
-            case Types.CLOB :
-            case Types.LONGVARBINARY:
-            case Types.NCLOB:
-            case Types.VARBINARY: return new ValueMetaBinary(name);
-
-            case Types.BIT :
-            case Types.BOOLEAN : return new ValueMetaBoolean(name);
-
-            case Types.CHAR : return new ValueMetaString(name);
-
-            case Types.DATALINK: return new ValueMetaInternetAddress(name);
-
-            case Types.DATE: return new ValueMetaDate(name);
-
-            case Types.DECIMAL:
-            case Types.DOUBLE:
-            case Types.FLOAT:
-            case Types.NUMERIC:
-            case Types.REAL: return new ValueMetaNumber(name);
-
-            case Types.INTEGER:
-            case Types.SMALLINT:
-            case Types.TINYINT: return new ValueMetaInteger(name);
-
-            case Types.JAVA_OBJECT: return new ValueMetaSerializable(name);
-
-            case Types.LONGNVARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.NCHAR:
-            case Types.NULL:
-            case Types.NVARCHAR:
-            case Types.OTHER:
-            case Types.VARCHAR: return new ValueMetaString(name);
-
-            case Types.TIME:
-            case Types.TIME_WITH_TIMEZONE:
-            case Types.TIMESTAMP:
-            case Types.TIMESTAMP_WITH_TIMEZONE: return new ValueMetaTimestamp(name);
-
-            default: return new ValueMetaString(name);
-
-        }
-
-    }
-
 
     //endregion
 }
