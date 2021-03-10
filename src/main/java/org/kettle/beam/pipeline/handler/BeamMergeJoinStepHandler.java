@@ -141,10 +141,16 @@ public class BeamMergeJoinStepHandler extends BeamBaseStepHandler implements Bea
 
     // This is the output of the step, we'll try to mimic this
     //
+    /*
     final RowMetaInterface outputRowMeta = leftVRowMeta.clone();
     outputRowMeta.addRowMeta( leftKRowMeta );
     outputRowMeta.addRowMeta( rightKRowMeta );
     outputRowMeta.addRowMeta( rightVRowMeta );
+    */
+
+    //TODO: novo
+    final RowMetaInterface outputRowMeta = leftRowMeta.clone();
+    outputRowMeta.addRowMeta( rightRowMeta );
 
     // Now we need to collapse the results where we have a Key-Value pair of
     // The key (left or right depending but the same row metadata (leftKRowMeta == rightKRowMeta)
@@ -159,6 +165,8 @@ public class BeamMergeJoinStepHandler extends BeamBaseStepHandler implements Bea
       JsonRowMeta.toJson( leftKRowMeta ),
       JsonRowMeta.toJson( leftVRowMeta ),
       JsonRowMeta.toJson( rightVRowMeta ),
+      JsonRowMeta.toJson( leftRowMeta ),
+      JsonRowMeta.toJson( rightRowMeta ),
       stepMeta.getName(),
       stepPluginClasses,
       xpPluginClasses

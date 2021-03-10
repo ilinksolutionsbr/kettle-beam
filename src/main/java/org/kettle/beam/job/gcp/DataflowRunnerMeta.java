@@ -1,4 +1,4 @@
-package org.kettle.beam.job.dataflow;
+package org.kettle.beam.job.gcp;
 
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.cluster.SlaveServer;
@@ -17,26 +17,113 @@ import java.util.List;
 
 @JobEntry(
         id = BeamConst.STRING_JOB_ENTRY_DATAFLOW_RUNNER_PLUGIN_ID,
-        name = "GCP DataFlow Runner",
+        name = "DataFlow Runner",
         description = "Google Cloud DataFlow Runner",
         image = "jobentry-dataflow-runner.svg",
-        categoryDescription = "Big Data"
+        categoryDescription = "Google Cloud Workflow"
 )
-public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEntryInterface {
+public class DataflowRunnerMeta extends JobEntryBase implements Cloneable, JobEntryInterface {
+
+    //region Attributes
 
     /**
      *  The PKG member is used when looking up internationalized strings.
      *  The properties file with localized keys is expected to reside in
      *  {the package of the class specified}/messages/messages_{locale}.properties
      */
-    private static Class<?> PKG = DataFlowRunnerMeta.class; // for i18n purposes $NON-NLS-1$
+    private static Class<?> PKG = DataflowRunnerMeta.class;
+    private DataflowRunner jobEntry;
 
+    public static final String PROJECT_ID = "project_id";
+    public static final String REGION = "region";
+    public static final String ZONE = "zone";
     public static final String JOB_NAME = "job_name";
+    public static final String TEMPLATE_LOCATION = "template_location";
+    public static final String TEMP_LOCATION = "temp_location";
+    public static final String WAIT_SERVICE = "WAIT_SERVICE";
 
+    private String projectId;
+    private String region;
+    private String zone;
     private String jobName;
+    private String templateLocation;
+    private String tempLocation;
+    private String waitService;
 
-    private DataFlowRunner jobEntry;
 
+    //endregion
+
+    //region Getters Setters
+
+    /**
+     * Let PDI know the class name to use for the dialog.
+     * @return the class name to use for the dialog for this job entry
+     */
+    public String getDialogClassName() {
+        return DataflowRunnerDialog.class.getName();
+    }
+
+    public DataflowRunner getJobEntry(){
+        if(jobEntry == null){jobEntry = new DataflowRunner(this);}
+        return jobEntry;
+    }
+
+    /**
+     * Returns true if the job entry offers a genuine true/false result upon execution,
+     * and thus supports separate "On TRUE" and "On FALSE" outgoing hops.
+     */
+    public boolean evaluates() {
+        return false;
+    }
+
+    /**
+     * Returns true if the job entry supports unconditional outgoing hops.
+     */
+    public boolean isUnconditional() {
+        return false;
+    }
+
+
+
+    public String getProjectId() {return projectId;}
+    public void setProjectId(String projectId ) {
+        this.projectId = projectId;
+    }
+
+    public String getRegion() {return region;}
+    public void setRegion(String region ) {
+        this.region = region;
+    }
+
+    public String getZone() {return zone;}
+    public void setZone(String zone ) {
+        this.zone = zone;
+    }
+
+    public String getJobName() {return jobName;}
+    public void setJobName(String jobName ) {
+        this.jobName = jobName;
+    }
+
+    public String getTemplateLocation() {return templateLocation;}
+    public void setTemplateLocation(String templateLocation ) {
+        this.templateLocation = templateLocation;
+    }
+
+    public String getTempLocation() {return tempLocation;}
+    public void setTempLocation(String tempLocation ) {
+        this.tempLocation = tempLocation;
+    }
+
+    public String getWaitService() {return waitService;}
+    public void setWaitService(String waitService ) {
+        this.waitService = waitService;
+    }
+
+
+    //endregion
+
+    //region Constructors
 
     /**
      * The JobEntry constructor executes super() and initializes its fields
@@ -44,29 +131,20 @@ public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEn
      *
      * @param name the name of the new job entry
      */
-    public DataFlowRunnerMeta( String name ) {
+    public DataflowRunnerMeta(String name ) {
         super( name, "" );
     }
 
     /**
      * No-Arguments constructor for convenience purposes.
      */
-    public DataFlowRunnerMeta() {
+    public DataflowRunnerMeta() {
         this( "" );
     }
 
-    /**
-     * Let PDI know the class name to use for the dialog.
-     * @return the class name to use for the dialog for this job entry
-     */
-    public String getDialogClassName() {
-        return DataFlowRunnerDialog.class.getName();
-    }
+    //endregion
 
-    public DataFlowRunner getJobEntry(){
-        if(jobEntry == null){jobEntry = new DataFlowRunner(this);}
-        return jobEntry;
-    }
+    //region Methods
 
     /**
      * This method is used when a job entry is duplicated in Spoon. It needs to return a deep copy of this
@@ -79,7 +157,7 @@ public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEn
      * @return a deep copy of this
      */
     public Object clone() {
-        DataFlowRunnerMeta entry = (DataFlowRunnerMeta) super.clone();
+        DataflowRunnerMeta entry = (DataflowRunnerMeta) super.clone();
         return entry;
     }
 
@@ -96,7 +174,13 @@ public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEn
     public String getXML() {
         StringBuffer xml = new StringBuffer();
         xml.append( super.getXML() );
+        xml.append( XMLHandler.addTagValue( PROJECT_ID, projectId ) );
+        xml.append( XMLHandler.addTagValue( REGION, region ) );
+        xml.append( XMLHandler.addTagValue( ZONE, zone ) );
         xml.append( XMLHandler.addTagValue( JOB_NAME, jobName ) );
+        xml.append( XMLHandler.addTagValue( TEMPLATE_LOCATION, templateLocation ) );
+        xml.append( XMLHandler.addTagValue( TEMP_LOCATION, tempLocation ) );
+        xml.append( XMLHandler.addTagValue( WAIT_SERVICE, waitService ) );
         return xml.toString();
     }
 
@@ -117,7 +201,13 @@ public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEn
     @Override
     public void loadXML(Node entryNode, List<DatabaseMeta> databases, List<SlaveServer> slaveServers, Repository repository, IMetaStore metaStore ) throws KettleXMLException {
         super.loadXML( entryNode, databases, slaveServers );
+        projectId = XMLHandler.getTagValue( entryNode, PROJECT_ID );
+        region = XMLHandler.getTagValue( entryNode, REGION );
+        zone = XMLHandler.getTagValue( entryNode, ZONE );
         jobName = XMLHandler.getTagValue( entryNode, JOB_NAME );
+        templateLocation = XMLHandler.getTagValue( entryNode, TEMPLATE_LOCATION );
+        tempLocation = XMLHandler.getTagValue( entryNode, TEMP_LOCATION );
+        waitService = XMLHandler.getTagValue( entryNode, WAIT_SERVICE );
     }
 
     /**
@@ -133,29 +223,7 @@ public class DataFlowRunnerMeta extends JobEntryBase implements Cloneable, JobEn
         return this.getJobEntry().execute(prevResult, nr);
     }
 
-    /**
-     * Returns true if the job entry offers a genuine true/false result upon execution,
-     * and thus supports separate "On TRUE" and "On FALSE" outgoing hops.
-     */
-    public boolean evaluates() {
-        return true;
-    }
 
-    /**
-     * Returns true if the job entry supports unconditional outgoing hops.
-     */
-    public boolean isUnconditional() {
-        return false;
-    }
-
-
-
-    public String getJobName() {
-        return jobName;
-    }
-    public void setJobName(String jobName ) {
-        this.jobName = jobName;
-    }
-
+    //endregion
 
 }

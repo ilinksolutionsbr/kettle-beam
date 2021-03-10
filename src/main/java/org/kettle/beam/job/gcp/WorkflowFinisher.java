@@ -1,12 +1,12 @@
-package org.kettle.beam.job.dataflow;
+package org.kettle.beam.job.gcp;
 
 import org.pentaho.di.core.Result;
 
-public class DataFlowRunner {
+public class WorkflowFinisher {
 
-    private DataFlowRunnerMeta meta;
+    private WorkflowFinisherMeta meta;
 
-    public DataFlowRunner(DataFlowRunnerMeta meta){
+    public WorkflowFinisher(WorkflowFinisherMeta meta){
         this.meta = meta;
     }
 

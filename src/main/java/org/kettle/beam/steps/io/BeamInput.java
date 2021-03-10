@@ -209,21 +209,3 @@ public class BeamInput extends BaseStep implements StepInterface {
     }
   }
 }
-
-class Test {
-  public static void main(String[] args) {
-    String test = "TesteSilva01/01/1990Rua Teste215UberlândiaMGBrasil20000018/02/2021 09:25:35.890";
-    int length = 5;
-    int length2 = 5;
-    String sub = test.substring(0, length);
-    String sub2 = test.substring(length, length + length2);
-
-    String enc = "'Teste''Silva''01/01/1990''Rua Teste''215''Uberlândia''MG''Brasil''200000''18/02/2021 09:25:35.890'";
-    String[] arr = enc.split("'");
-
-    List<String> list = new ArrayList<>(Arrays.asList(enc.split("'")));
-    list.removeIf(e -> e.equals(""));
-
-    System.out.println(list);
-  }
-}
