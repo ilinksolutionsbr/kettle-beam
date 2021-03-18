@@ -40,6 +40,10 @@ public class BeamKettle {
 
       // LOG.info( "Registering " + stepPluginClasses.size() + " extra step plugins, and " + xpPluginClasses.size() + " XP plugins" );
 
+      // Clean empty spaces to avoid trying to load classes with a empty space as their names
+      stepPluginClasses.removeIf(i -> i.trim().isEmpty());
+      xpPluginClasses.removeIf(i -> i.trim().isEmpty());
+
       // Register extra classes from the plugins...
       // If they're already in the classpath, this should be fast.
       //

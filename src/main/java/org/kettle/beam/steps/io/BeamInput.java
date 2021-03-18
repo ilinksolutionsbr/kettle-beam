@@ -129,7 +129,12 @@ public class BeamInput extends BaseStep implements StepInterface {
           line = line.replace(fileDefinition.getEnclosure(), "");
         }
 
-        arr = line.split(fileDefinition.getSeparator());
+        if(line.contains(fileDefinition.getSeparator())) {
+          arr = line.split(fileDefinition.getSeparator());
+        } else {
+          log.logError("A linha especificada não possui o separador de campo especificado na definição de arquivo.");
+          throw new Exception("A linha especificada não possui o separador de campo especificado na definição de arquivo.");
+        }
       } else if(hasFieldEnclosure) {
         List<String> list = new ArrayList<>(Arrays.asList(line.split("'")));
         list.removeIf(e -> e.equals(""));

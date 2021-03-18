@@ -59,6 +59,19 @@ public class MainBeam {
       List<String> stepPluginsList = new ArrayList<>( Arrays.asList( Const.NVL(jobConfig.getStepPluginClasses(), "").split( "," ) ) );
       List<String> xpPluginsList = new ArrayList<>( Arrays.asList( Const.NVL(jobConfig.getXpPluginClasses(), "").split( "," ) ) );
 
+      stepPluginsList.removeIf(i -> i.trim().isEmpty());
+      xpPluginsList.removeIf(i -> i.trim().isEmpty());
+
+      System.out.println(">>>>>> Steps loaded : ");
+      for(String step: stepPluginsList) {
+        System.out.println(step);
+      }
+
+      System.out.println(">>>>>> Plugins loaded : ");
+      for(String plugin: xpPluginsList) {
+        System.out.println(plugin);
+      }
+
       System.out.println( ">>>>>> Initializing Kettle runtime (" + stepPluginsList.size() + " step classes, " + xpPluginsList.size() + " XP classes)" );
 
       BeamKettle.init( stepPluginsList, xpPluginsList );
