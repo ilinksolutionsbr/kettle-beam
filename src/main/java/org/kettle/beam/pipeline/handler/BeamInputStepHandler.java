@@ -57,7 +57,8 @@ public class BeamInputStepHandler extends BeamBaseStepHandler implements BeamSte
               transMeta.environmentSubstitute( inputFileDefinition.getSeparator() ),
               JsonRowMeta.toJson( fileRowMeta ),
               stepPluginClasses,
-              xpPluginClasses
+              xpPluginClasses,
+              inputFileDefinition
       );
       PCollection<KettleRow> afterInput = pipeline.apply( beamInputTransform );
       stepCollectionMap.put( stepMeta.getName(), afterInput );

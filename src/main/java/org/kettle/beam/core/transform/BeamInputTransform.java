@@ -11,6 +11,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.fn.StringToKettleFn;
+import org.kettle.beam.metastore.FileDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ public class BeamInputTransform extends PTransform<PBegin, PCollection<KettleRow
   private String rowMetaJson;
   private List<String> stepPluginClasses;
   private List<String> xpPluginClasses;
+  private FileDefinition fileDefinition;
 
   // Log and count errors.
   private static final Logger LOG = LoggerFactory.getLogger( BeamInputTransform.class );
@@ -35,7 +37,7 @@ public class BeamInputTransform extends PTransform<PBegin, PCollection<KettleRow
   public BeamInputTransform() {
   }
 
-  public BeamInputTransform( @Nullable String name, String stepname, String inputLocation, String separator, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public BeamInputTransform(@Nullable String name, String stepname, String inputLocation, String separator, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses, FileDefinition fileDefinition) {
     super( name );
     this.stepname = stepname;
     this.inputLocation = inputLocation;
@@ -43,6 +45,7 @@ public class BeamInputTransform extends PTransform<PBegin, PCollection<KettleRow
     this.rowMetaJson = rowMetaJson;
     this.stepPluginClasses = stepPluginClasses;
     this.xpPluginClasses = xpPluginClasses;
+    this.fileDefinition = fileDefinition;
   }
 
   @Override public PCollection<KettleRow> expand( PBegin input ) {
@@ -59,7 +62,7 @@ public class BeamInputTransform extends PTransform<PBegin, PCollection<KettleRow
         .withCompression( Compression.UNCOMPRESSED )
         ;
 
-      StringToKettleFn stringToKettleFn = new StringToKettleFn( stepname, rowMetaJson, separator, stepPluginClasses, xpPluginClasses );
+      StringToKettleFn stringToKettleFn = new StringToKettleFn( stepname, rowMetaJson, separator, stepPluginClasses, xpPluginClasses, fileDefinition );
 
       PCollection<KettleRow> output = input
 
