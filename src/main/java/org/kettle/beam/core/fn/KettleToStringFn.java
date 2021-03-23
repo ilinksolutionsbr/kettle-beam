@@ -74,20 +74,25 @@ public class KettleToStringFn extends DoFn<KettleRow, String> {
       // TODO: refine with multiple output formats, Avro, Parquet, ...
       //
       StringBuffer line = new StringBuffer();
+      boolean separate = StringUtils.isNotEmpty(separator);
+      boolean enclose = StringUtils.isNotEmpty( enclosure );
 
       for ( int i = 0; i < rowMeta.size(); i++ ) {
 
-        if ( i > 0 ) {
+        if ( i > 0 && separate) {
           line.append( separator );
         }
 
-        String valueString = rowMeta.getString( inputRow.getRow(), i );
+        String valueString;
+
+        if(rowMeta.getValueMeta(i).isNumber()) {
+          Double valueNumber = rowMeta.getNumber(inputRow.getRow(), i);
+          valueString = Double.toString(valueNumber);
+        } else {
+          valueString = rowMeta.getString( inputRow.getRow(), i );
+        }
 
         if ( valueString != null ) {
-          boolean enclose = false;
-          if ( StringUtils.isNotEmpty( enclosure ) ) {
-            enclose = valueString.contains( enclosure );
-          }
           if ( enclose ) {
             line.append( enclosure );
           }
