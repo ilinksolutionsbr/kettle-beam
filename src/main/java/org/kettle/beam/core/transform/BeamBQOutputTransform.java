@@ -126,13 +126,17 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
         }
       }
 
+      BigQueryIO.Write.Method method = !Strings.isNullOrEmpty(this.tempLocation)
+                                     ? BigQueryIO.Write.Method.FILE_LOADS
+                                     : BigQueryIO.Write.Method.STREAMING_INSERTS;
+
       BigQueryIO.Write<KettleRow> bigQueryWrite = BigQueryIO
         .<KettleRow>write()
         .to( tableReference )
         .withSchema( tableSchema )
         .withCreateDisposition( createDisposition )
         .withWriteDisposition( writeDisposition )
-        .withMethod(BigQueryIO.Write.Method.FILE_LOADS)
+        .withMethod(method)
         .withFormatFunction( formatFunction );
 
       if(!Strings.isNullOrEmpty(this.tempLocation)){
