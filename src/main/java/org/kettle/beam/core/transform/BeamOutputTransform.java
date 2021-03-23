@@ -12,6 +12,7 @@ import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.fn.KettleToStringFn;
 import org.kettle.beam.core.util.JsonRowMeta;
+import org.kettle.beam.metastore.FileDefinition;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +28,11 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
   private String outputLocation;
   private String filePrefix;
   private String fileSuffix;
-  private String separator;
-  private String enclosure;
   private String rowMetaJson;
   private boolean windowed;
   private List<String> stepPluginClasses;
   private List<String> xpPluginClasses;
+  private FileDefinition fileDefinition;
 
   // Log and count errors.
   private static final Logger LOG = LoggerFactory.getLogger( BeamOutputTransform.class );
@@ -41,17 +41,16 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
   public BeamOutputTransform() {
   }
 
-  public BeamOutputTransform( String stepname, String outputLocation, String filePrefix, String fileSuffix, String separator, String enclosure, boolean windowed, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public BeamOutputTransform( String stepname, String outputLocation, String filePrefix, String fileSuffix, boolean windowed, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses, FileDefinition fileDefinition ) {
     this.stepname = stepname;
     this.outputLocation = outputLocation;
     this.filePrefix = filePrefix;
     this.fileSuffix = fileSuffix;
-    this.separator = separator;
-    this.enclosure = enclosure;
     this.windowed = windowed;
     this.rowMetaJson = rowMetaJson;
     this.stepPluginClasses = stepPluginClasses;
     this.xpPluginClasses = xpPluginClasses;
+    this.fileDefinition = fileDefinition;
   }
 
   @Override public PDone expand( PCollection<KettleRow> input ) {
@@ -68,7 +67,7 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
       // This is the end of a computing chain, we write out the results
       // We write a bunch of Strings, one per line basically
       //
-      PCollection<String> stringCollection = input.apply( stepname, ParDo.of( new KettleToStringFn( stepname, outputLocation, separator, enclosure, rowMetaJson, stepPluginClasses, xpPluginClasses ) ) );
+      PCollection<String> stringCollection = input.apply( stepname, ParDo.of( new KettleToStringFn( stepname, outputLocation, fileDefinition.getSeparator(), fileDefinition.getEnclosure(), rowMetaJson, stepPluginClasses, xpPluginClasses ) ) );
 
       // We need to transform these lines into a file and then we're PDone
       //
@@ -170,38 +169,6 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
    */
   public void setFileSuffix( String fileSuffix ) {
     this.fileSuffix = fileSuffix;
-  }
-
-  /**
-   * Gets separator
-   *
-   * @return value of separator
-   */
-  public String getSeparator() {
-    return separator;
-  }
-
-  /**
-   * @param separator The separator to set
-   */
-  public void setSeparator( String separator ) {
-    this.separator = separator;
-  }
-
-  /**
-   * Gets enclosure
-   *
-   * @return value of enclosure
-   */
-  public String getEnclosure() {
-    return enclosure;
-  }
-
-  /**
-   * @param enclosure The enclosure to set
-   */
-  public void setEnclosure( String enclosure ) {
-    this.enclosure = enclosure;
   }
 
   /**

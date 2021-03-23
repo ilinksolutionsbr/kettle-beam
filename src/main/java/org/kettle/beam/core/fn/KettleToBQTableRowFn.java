@@ -13,6 +13,7 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +32,7 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
   private transient Counter errorCounter;
 
   private transient SimpleDateFormat simpleDateFormat;
+  private transient SimpleDateFormat simpleTimestampFormat;
 
   // Log and count parse errors.
   private static final Logger LOG = LoggerFactory.getLogger( KettleToBQTableRowFn.class );
@@ -55,7 +57,8 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
         BeamKettle.init( stepPluginClasses, xpPluginClasses );
         rowMeta = JsonRowMeta.fromJson( rowMetaJson );
 
-        simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
+        simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+        simpleTimestampFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
         Metrics.counter( "init", counterName ).inc();
       }
 
@@ -76,6 +79,11 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
               Date date = valueMeta.getDate( valueData );
               String formattedDate = simpleDateFormat.format( date );
               tableRow.put( valueMeta.getName(), formattedDate);
+              break;
+            case ValueMetaInterface.TYPE_TIMESTAMP:
+              Date timestamp = valueMeta.getDate(valueData);
+              String formattedTimestamp = simpleTimestampFormat.format( timestamp );
+              tableRow.put( valueMeta.getName(), formattedTimestamp);
               break;
             case ValueMetaInterface.TYPE_BOOLEAN: tableRow.put( valueMeta.getName(), valueMeta.getBoolean( valueData ) ); break;
             case ValueMetaInterface.TYPE_NUMBER: tableRow.put( valueMeta.getName(), valueMeta.getNumber( valueData ) ); break;

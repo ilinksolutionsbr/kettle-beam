@@ -115,7 +115,6 @@ public class BeamDatabaseConnectorHelper {
 
     public static ValueMetaInterface createValueMeta(String name, int type){
         switch (type){
-            case Types.BIGINT : return new ValueMetaBigNumber(name);
 
             case Types.BINARY :
             case Types.BLOB :
@@ -136,9 +135,11 @@ public class BeamDatabaseConnectorHelper {
             case Types.DECIMAL:
             case Types.DOUBLE:
             case Types.FLOAT:
-            case Types.NUMERIC:
             case Types.REAL: return new ValueMetaNumber(name);
 
+            case Types.NUMERIC: return new ValueMetaBigNumber(name);
+
+            case Types.BIGINT :
             case Types.INTEGER:
             case Types.SMALLINT:
             case Types.TINYINT: return new ValueMetaInteger(name);

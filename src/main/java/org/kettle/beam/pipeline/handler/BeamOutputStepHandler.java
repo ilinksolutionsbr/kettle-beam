@@ -60,12 +60,11 @@ public class BeamOutputStepHandler extends BeamBaseStepHandler implements BeamSt
       transMeta.environmentSubstitute( beamOutputMeta.getOutputLocation() ),
       transMeta.environmentSubstitute( beamOutputMeta.getFilePrefix() ),
       transMeta.environmentSubstitute( beamOutputMeta.getFileSuffix() ),
-      transMeta.environmentSubstitute( !StringUtils.isEmpty(outputFileDefinition.getSeparator()) ? outputFileDefinition.getSeparator() : "" ),
-      transMeta.environmentSubstitute( !StringUtils.isEmpty(outputFileDefinition.getEnclosure()) ? outputFileDefinition.getEnclosure() : "" ),
       beamOutputMeta.isWindowed(),
       JsonRowMeta.toJson( rowMeta ),
       stepPluginClasses,
-      xpPluginClasses
+      xpPluginClasses,
+      outputFileDefinition
     );
 
     // Which step do we apply this transform to?

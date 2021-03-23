@@ -121,7 +121,7 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
                 case ValueMetaInterface.TYPE_STRING: tuple = Tuple.of(this.getInputRowMeta().getString(row, i), Types.VARCHAR) ; break;
                 case ValueMetaInterface.TYPE_INTEGER: tuple = Tuple.of(this.getInputRowMeta().getInteger(row, i), Types.INTEGER); break;
                 case ValueMetaInterface.TYPE_NUMBER: tuple = Tuple.of(this.getInputRowMeta().getNumber(row, i), Types.NUMERIC); break;
-                case ValueMetaInterface.TYPE_BIGNUMBER: tuple = Tuple.of(this.getInputRowMeta().getBigNumber(row, i), Types.BIGINT); break;
+                case ValueMetaInterface.TYPE_BIGNUMBER: tuple = Tuple.of(this.getInputRowMeta().getBigNumber(row, i), Types.NUMERIC); break;
                 case ValueMetaInterface.TYPE_BOOLEAN: tuple = Tuple.of(this.getInputRowMeta().getBoolean(row, i), Types.BOOLEAN); break;
                 case ValueMetaInterface.TYPE_DATE: tuple = Tuple.of(this.getInputRowMeta().getDate(row, i), Types.DATE); break;
                 case ValueMetaInterface.TYPE_TIMESTAMP: tuple = Tuple.of(this.getInputRowMeta().getDate(row, i), Types.TIMESTAMP); break;
@@ -189,6 +189,7 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
 
         Object[] row;
         List<String> columns = new ArrayList<>();
+        List<Integer> columnsOriginalType = new ArrayList<>();
 
         String columnName;
         int columnType;
@@ -197,10 +198,12 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
             for(FieldInfo fieldInfo : meta.getFields()){
                 for(int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                     columnName = resultSet.getMetaData().getColumnName(i);
+                    columnType = resultSet.getMetaData().getColumnType(i);
                     if(fieldInfo.getColumn().equalsIgnoreCase(columnName)){
                         valueMeta = this.createValueMeta(fieldInfo);
                         outputRowMeta.addValueMeta(valueMeta);
                         columns.add(columnName);
+                        columnsOriginalType.add(columnType);
                         break;
                     }
                 }
@@ -212,21 +215,43 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
                 valueMeta = BeamDatabaseConnectorHelper.createValueMeta(columnName, columnType);
                 outputRowMeta.addValueMeta(valueMeta);
                 columns.add(columnName);
+                columnsOriginalType.add(columnType);
             }
         }
 
         Object value;
+        int j = -1;
         while(resultSet.next()){
+            j++;
             row = new Object[columns.size()];
             for(int i = 0; i < columns.size(); i++) {
                 value = resultSet.getObject(columns.get(i));
-                row[i] = value;
+                //Inicia a conversão de tipos
+                if(value == null){
+                    row[i] = value;
+                } else {
+                    row[i] = castToSupportedType(value, columnsOriginalType.get(i));
+                }
             }
             this.putRow(outputRowMeta, row);
             if (isRowLevel()) {
                 logRowlevel("Beam Database Connector", outputRowMeta.getString(row));
             }
         }
+    }
+
+    private Object castToSupportedType(Object value, int type){
+
+        switch(type){
+
+            case Types.INTEGER:
+            case Types.SMALLINT:
+            case Types.TINYINT:
+                value = Long.valueOf((Integer) value);
+                break;
+        }
+
+        return value;
     }
 
     private ValueMetaInterface createValueMeta(FieldInfo fieldInfo){
