@@ -22,6 +22,11 @@
 
 package org.kettle.beam.perspective;
 
+import com.google.cloud.workflows.v1beta.CreateWorkflowRequest;
+import com.google.cloud.workflows.v1beta.LocationName;
+import com.google.cloud.workflows.v1beta.Workflow;
+import com.google.cloud.workflows.v1beta.WorkflowsClient;
+import com.google.protobuf.ByteString;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions;
@@ -54,12 +59,7 @@ import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.job.pipeline.JobPipeline;
-import org.kettle.beam.metastore.BeamJobConfig;
-import org.kettle.beam.metastore.BeamJobConfigDialog;
-import org.kettle.beam.metastore.FileDefinition;
-import org.kettle.beam.metastore.FileDefinitionDialog;
-import org.kettle.beam.metastore.JobParameter;
-import org.kettle.beam.metastore.RunnerType;
+import org.kettle.beam.metastore.*;
 import org.kettle.beam.pipeline.KettleBeamPipelineExecutor;
 import org.kettle.beam.pipeline.TransMetaPipelineConverter;
 import org.kettle.beam.pipeline.fatjar.FatJarBuilder;
@@ -69,6 +69,7 @@ import org.pentaho.di.core.ProgressMonitorAdapter;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.extension.ExtensionPoint;
+import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.plugins.KettleURLClassLoader;
@@ -91,8 +92,10 @@ import org.pentaho.metastore.util.PentahoDefaults;
 import org.pentaho.ui.xul.dom.Document;
 import org.pentaho.ui.xul.impl.AbstractXulEventHandler;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -109,7 +112,7 @@ import java.util.TimerTask;
 
 public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuController {
   protected static Class<?> PKG = BeamHelper.class; // for i18n
-
+  protected LogChannelInterface log;
   private static BeamHelper instance = null;
 
   private Spoon spoon;
@@ -124,6 +127,13 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       instance.spoon.addSpoonMenuController( instance );
     }
     return instance;
+  }
+
+  public LogChannelInterface getLog(){
+    if(log == null){
+      log = KettleLogStore.getLogChannelInterfaceFactory().create(this);
+    }
+    return log;
   }
 
   @Override public void updateMenu( Document doc ) {
@@ -593,17 +603,16 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
   }
 
 
-  public void generateWorkflowYAML(){
+  public void generateWorkflow(){
     final Shell shell = Spoon.getInstance().getShell();
 
-    try {
-      JobMeta jobMeta = spoon.getActiveJob();
+    JobMeta jobMeta = spoon.getActiveJob();
+    if (jobMeta == null) {
+      showMessage("Aviso", "Para gerar/publicar o YAML do GCP Workflow, precisa estar com o JOB aberto e em exibição na tela.");
+      return;
+    }
 
-      if (jobMeta == null) {
-        showMessage("Aviso", "Para gerar o YAML do GCP Workflow, precisa estar com o JOB aberto e em exibição na tela.");
-        return;
-      }
-
+    try{
       FileDialog dialog = new FileDialog(shell, SWT.SAVE);
       dialog.setText("Selecione o local do YAML.");
       dialog.setFilterNames(new String[]{"YAML files (*.yaml)", "All Files (*.*)"});
@@ -615,6 +624,8 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         return;
       }
 
+      this.getLog().logDebug("Gerando GCP Workflow YAML em: " + filename);
+
       JobPipeline pipeline = new JobPipeline(jobMeta);
       String yaml = pipeline.toGcpYAML();
 
@@ -623,12 +634,45 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       fileOutputStream.flush();
       fileOutputStream.close();
 
+      this.getLog().logDebug("GCP Workflow YAML gerado com sucesso.");
       showMessage("Sucesso", "YAML gerado com sucesso.");
 
-    }catch (Exception ex){
-      new KettleErrorDialog( shell, "Error", ex.getMessage(), ex );
+      MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+      messageBox.setMessage("Deseja publica o YAML gerado agora ?");
+      messageBox.setText("Confirmacao");
+      if (messageBox.open() == SWT.YES){
+        publishWorkflow(jobMeta.getName(), filename);
+      }
+
+    }catch(Exception ex){
+      this.getLog().logError("Ocorreu um erro ao gerar o GCP Workflow YAML.", ex);
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), ex );
 
     }
+
+  }
+
+  private void publishWorkflow(String name, String source){
+    source = !source.contains(" ") ? source : "\"" + source + "\"";
+    String command = "gcloud beta workflows deploy " + name + " --source=" + source;
+
+    try{
+      this.getLog().logDebug("Publicando GCP Workflow YAML.");
+      Runtime run = Runtime.getRuntime();
+      Process process = run.exec(command);
+      process.waitFor();
+      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      String line = "";
+      while ((line=bufferedReader.readLine())!=null) {
+        getLog().logDebug(line);
+      }
+      this.getLog().logDebug("GCP Workflow YAML publicado com sucesso.");
+
+    }catch (Exception ex){
+      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), ex );
+
+    }
+
   }
 
 }

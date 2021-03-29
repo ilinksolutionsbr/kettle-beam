@@ -24,7 +24,7 @@
         <menuseparator/>
         <menuitem id="beam-generate-fat-jar" label="Generate a Spark/Flink fat JAR" command="beamHelper.generateFatJar()"/>
         <menuitem id="beam-export-metastore" label="Export current metastore" command="beamHelper.exportMetaStore()"/>
-        <menuitem id="beam-workflow-yaml" label="Google Cloud - Generate Workflow YAML" command="beamHelper.generateWorkflowYAML()"/>
+        <menuitem id="beam-publish-workflow" label="Generate Workflow (GCP)" command="beamHelper.generateWorkflow()"/>
       </menupopup>
     </menu>
 
