@@ -71,6 +71,7 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.extension.ExtensionPoint;
 import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogChannelInterface;
+import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.plugins.KettleURLClassLoader;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -82,6 +83,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.spoon.ISpoonMenuController;
 import org.pentaho.di.ui.spoon.Spoon;
 import org.pentaho.di.ui.spoon.job.JobGraph;
@@ -127,13 +129,6 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       instance.spoon.addSpoonMenuController( instance );
     }
     return instance;
-  }
-
-  public LogChannelInterface getLog(){
-    if(log == null){
-      log = KettleLogStore.getLogChannelInterfaceFactory().create(this);
-    }
-    return log;
   }
 
   @Override public void updateMenu( Document doc ) {
@@ -604,6 +599,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
 
 
   public void generateWorkflow(){
+
     final Shell shell = Spoon.getInstance().getShell();
 
     JobMeta jobMeta = spoon.getActiveJob();
@@ -624,7 +620,10 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         return;
       }
 
-      this.getLog().logDebug("Gerando GCP Workflow YAML em: " + filename);
+      spoon.getLog().setLogLevel(LogLevel.DEBUG);
+      spoon.showExecutionResults();
+
+      spoon.getLog().logBasic("Gerando GCP Workflow YAML em: " + filename);
 
       JobPipeline pipeline = new JobPipeline(jobMeta);
       String yaml = pipeline.toGcpYAML();
@@ -634,18 +633,20 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       fileOutputStream.flush();
       fileOutputStream.close();
 
-      this.getLog().logDebug("GCP Workflow YAML gerado com sucesso.");
+      spoon.getLog().logBasic("GCP Workflow YAML gerado com sucesso.");
       showMessage("Sucesso", "YAML gerado com sucesso.");
 
       MessageBox messageBox = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
       messageBox.setMessage("Deseja publica o YAML gerado agora ?");
       messageBox.setText("Confirmacao");
       if (messageBox.open() == SWT.YES){
-        publishWorkflow(jobMeta.getName(), filename);
+        new Thread(() -> {
+          publishWorkflow(jobMeta.getName(), filename);
+        }).start();
       }
 
     }catch(Exception ex){
-      this.getLog().logError("Ocorreu um erro ao gerar o GCP Workflow YAML.", ex);
+      spoon.getLog().logError("Ocorreu um erro ao gerar o GCP Workflow YAML.", ex);
       new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), ex );
 
     }
@@ -653,23 +654,87 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
   }
 
   private void publishWorkflow(String name, String source){
-    source = !source.contains(" ") ? source : "\"" + source + "\"";
-    String command = "gcloud beta workflows deploy " + name + " --source=" + source;
+    String OS = System.getProperty("os.name").toLowerCase();
+
+    String command;
+    String gcloud;
+    Process process;
+    Runtime run = Runtime.getRuntime();
+    BufferedReader bufferedReader;
+    BufferedReader errorBufferedReader;
+    String line;
+    String fileGoogleApplicationCredentials;
+    StringBuilder builder = null;
+    int result;
 
     try{
-      this.getLog().logDebug("Publicando GCP Workflow YAML.");
-      Runtime run = Runtime.getRuntime();
-      Process process = run.exec(command);
-      process.waitFor();
-      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      String line = "";
+
+      gcloud = OS.contains("win") ? "gcloud.cmd" : "gcloud.sh";
+
+      //AUTH
+      spoon.getLog().logBasic("Setando o arquivo de configuração do projeto.");
+      fileGoogleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+      if(Strings.isNullOrEmpty(fileGoogleApplicationCredentials)){fileGoogleApplicationCredentials = System.getProperty("GOOGLE_APPLICATION_CREDENTIALS");}
+      if(Strings.isNullOrEmpty(fileGoogleApplicationCredentials)){throw new Exception("Arquivo de Credenciais do Google não localizado.");}
+      command = gcloud + " auth activate-service-account --key-file=\"" + fileGoogleApplicationCredentials + "\"";
+      process = run.exec(command);
+      bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      line = "";
       while ((line=bufferedReader.readLine())!=null) {
-        getLog().logDebug(line);
+        spoon.getLog().logBasic(line);
       }
-      this.getLog().logDebug("GCP Workflow YAML publicado com sucesso.");
+      errorBufferedReader = new BufferedReader((new InputStreamReader(process.getErrorStream())));
+      line = "";
+      builder = new StringBuilder();
+      while ((line=errorBufferedReader.readLine())!=null) {
+        builder.append(line + "\n");
+      }
+
+      result = process.waitFor();
+
+      if(result == 0){
+        if(builder != null && builder.length() > 0){ spoon.getLog().logBasic(builder.toString());}
+
+        //PUBLISHER
+        spoon.getLog().logBasic("Publicando GCP Workflow YAML.");
+        command = gcloud + " beta workflows deploy " + name + " --source=\"" + source + "\"";
+        process = run.exec(command);
+        bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        line = "";
+        while ((line=bufferedReader.readLine())!=null) {
+          spoon.getLog().logBasic(line);
+        }
+        errorBufferedReader = new BufferedReader((new InputStreamReader(process.getErrorStream())));
+        line = "";
+        builder = new StringBuilder();
+        while ((line=errorBufferedReader.readLine())!=null) {
+          builder.append(line + "\n");
+        }
+
+        result = process.waitFor();
+
+        if(result == 0) {
+          if(builder != null && builder.length() > 0){ spoon.getLog().logBasic(builder.toString());}
+          spoon.getDisplay().syncExec(()->{
+            SimpleMessageDialog.openInformation(spoon.getShell(), "Aviso", "GCP Workflow YAML publicado com sucesso.");
+          });
+
+        }else{
+          throw new Exception("Ocorreu um erro ao publicar o GCP Workflow YAML.");
+
+        }
+
+      }else{
+        throw new Exception("Não foi possivel setar o arquivo de configuração do projeto.");
+
+      }
 
     }catch (Exception ex){
-      new KettleErrorDialog( spoon.getShell(), "Error", BaseMessages.getString( PKG, "BeamHelper.ErrorEditingJobConfig.Message" ), ex );
+      if(builder != null && builder.length() > 0){ spoon.getLog().logError(builder.toString());}
+      spoon.getLog().logError(ex.getMessage());
+      spoon.getDisplay().syncExec(()-> {
+        new KettleErrorDialog(spoon.getShell(), "Error", "Erro ao publicar o YAML", ex);
+      });
 
     }
 
