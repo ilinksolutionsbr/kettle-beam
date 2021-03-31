@@ -55,6 +55,8 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.metastore.SerializableMetaStore;
 import org.kettle.beam.core.util.Strings;
@@ -94,10 +96,7 @@ import org.pentaho.metastore.util.PentahoDefaults;
 import org.pentaho.ui.xul.dom.Document;
 import org.pentaho.ui.xul.impl.AbstractXulEventHandler;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -655,89 +654,100 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
 
   private void publishWorkflow(String name, String source){
     String OS = System.getProperty("os.name").toLowerCase();
-
-    String command;
-    String gcloud;
-    Process process;
-    Runtime run = Runtime.getRuntime();
-    BufferedReader bufferedReader;
-    BufferedReader errorBufferedReader;
-    String line;
+    String gcloud = OS.contains("win") ? "gcloud.cmd" : "gcloud.sh";
     String fileGoogleApplicationCredentials;
-    StringBuilder builder = null;
+    String command;
     int result;
 
     try{
 
-      gcloud = OS.contains("win") ? "gcloud.cmd" : "gcloud.sh";
-
-      //AUTH
+      //SET AUTH
       spoon.getLog().logBasic("Setando o arquivo de configuração do projeto.");
       fileGoogleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
       if(Strings.isNullOrEmpty(fileGoogleApplicationCredentials)){fileGoogleApplicationCredentials = System.getProperty("GOOGLE_APPLICATION_CREDENTIALS");}
       if(Strings.isNullOrEmpty(fileGoogleApplicationCredentials)){throw new Exception("Arquivo de Credenciais do Google não localizado.");}
       command = gcloud + " auth activate-service-account --key-file=\"" + fileGoogleApplicationCredentials + "\"";
-      process = run.exec(command);
-      bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      line = "";
-      while ((line=bufferedReader.readLine())!=null) {
-        spoon.getLog().logBasic(line);
-      }
-      errorBufferedReader = new BufferedReader((new InputStreamReader(process.getErrorStream())));
-      line = "";
-      builder = new StringBuilder();
-      while ((line=errorBufferedReader.readLine())!=null) {
-        builder.append(line + "\n");
-      }
-
-      result = process.waitFor();
+      result = this.execute(command,"Setando credenciais 'service account'.");
 
       if(result == 0){
-        if(builder != null && builder.length() > 0){ spoon.getLog().logBasic(builder.toString());}
 
-        //PUBLISHER
-        spoon.getLog().logBasic("Publicando GCP Workflow YAML.");
-        command = gcloud + " beta workflows deploy " + name + " --source=\"" + source + "\"";
-        process = run.exec(command);
-        bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        line = "";
-        while ((line=bufferedReader.readLine())!=null) {
-          spoon.getLog().logBasic(line);
-        }
-        errorBufferedReader = new BufferedReader((new InputStreamReader(process.getErrorStream())));
-        line = "";
-        builder = new StringBuilder();
-        while ((line=errorBufferedReader.readLine())!=null) {
-          builder.append(line + "\n");
-        }
+        //SET Project
+        JSONParser parser = new JSONParser();
+        Object instance = parser.parse(new FileReader(fileGoogleApplicationCredentials));
+        JSONObject jsonObject = (JSONObject)instance;
+        String projectId = (String)jsonObject.get("project_id");
+        if(Strings.isNullOrEmpty(projectId)){throw new Exception("Project Id não encontrado no arquivo de credencial '" + fileGoogleApplicationCredentials + "'");}
+        command = gcloud + " config set project " + projectId;
+        result = this.execute(command,"Setando projeto '" + projectId + "'");
 
-        result = process.waitFor();
+        if(result == 0){
 
-        if(result == 0) {
-          if(builder != null && builder.length() > 0){ spoon.getLog().logBasic(builder.toString());}
-          spoon.getDisplay().syncExec(()->{
-            SimpleMessageDialog.openInformation(spoon.getShell(), "Aviso", "GCP Workflow YAML publicado com sucesso.");
-          });
+          //PUBLISH Workflow
+          command = gcloud + " beta workflows deploy " + name + " --source=\"" + source + "\"";
+          result = this.execute(command,"Publicando GCP Workflow YAML '" + name + "'");
 
-        }else{
-          throw new Exception("Ocorreu um erro ao publicar o GCP Workflow YAML.");
+          if(result == 0) {
+            spoon.getDisplay().syncExec(()->{
+              SimpleMessageDialog.openInformation(spoon.getShell(), "Aviso", "GCP Workflow YAML publicado com sucesso.");
+            });
+
+          }else{
+            throw new Exception("Ocorreu um erro ao publicar o GCP Workflow YAML.");
+
+          }
+
+        } else{
+          throw new Exception("Não foi possivel setar o projeto.");
 
         }
 
       }else{
-        throw new Exception("Não foi possivel setar o arquivo de configuração do projeto.");
+        throw new Exception("Não foi possivel setar o arquivo de credenciais 'service account'.");
 
       }
 
     }catch (Exception ex){
-      if(builder != null && builder.length() > 0){ spoon.getLog().logError(builder.toString());}
       spoon.getLog().logError(ex.getMessage());
       spoon.getDisplay().syncExec(()-> {
         new KettleErrorDialog(spoon.getShell(), "Error", "Erro ao publicar o YAML", ex);
       });
 
     }
-
   }
+
+  private int execute(String command, String description) throws IOException, InterruptedException {
+    Process process;
+    Runtime run = Runtime.getRuntime();
+    BufferedReader bufferedReader;
+    BufferedReader errorBufferedReader;
+    String line;
+    StringBuilder builder = new StringBuilder();
+
+    spoon.getLog().logBasic(description);
+    process = run.exec(command);
+    bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    line = "";
+    while ((line=bufferedReader.readLine())!=null) {
+      spoon.getLog().logBasic(line);
+    }
+    errorBufferedReader = new BufferedReader((new InputStreamReader(process.getErrorStream())));
+    line = "";
+    while ((line=errorBufferedReader.readLine())!=null) {
+      builder.append(line + "\n");
+    }
+
+    int result = process.waitFor();
+
+    if(builder.length() > 0) {
+      if (result == 0) {
+        spoon.getLog().logBasic(builder.toString());
+      } else {
+        spoon.getLog().logError(builder.toString());
+      }
+    }
+
+    return result;
+  }
+
 
 }
