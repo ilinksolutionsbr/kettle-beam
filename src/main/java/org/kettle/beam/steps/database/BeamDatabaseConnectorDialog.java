@@ -534,6 +534,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         connection = DriverManager.getConnection(connectionString, username, password);
         connection.setAutoCommit(false);
         preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setMaxRows(1);
 
         //iNSERINDO PARÂMETROS NULOS CASO EXISTAM, APENAS PARA RECEBER OS METADADOS DO RESULTADO
         if(parameters.size() > 0) {
