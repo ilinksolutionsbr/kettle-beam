@@ -547,9 +547,19 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
   public void exportMetaStore() {
     final Shell shell = Spoon.getInstance().getShell();
     final IMetaStore metaStore = Spoon.getInstance().getMetaStore();
-    final String filename = "/tmp/metastore.json";
 
     try {
+      FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+      dialog.setText("Selecione o local do Metastore");
+      dialog.setFilterNames(new String[]{"JSON files (*.json)", "All Files (*.*)"});
+      dialog.setFilterExtensions(new String[]{"*.json", "*.*"}); // Windows
+      dialog.setFileName("metastore.json");
+
+      String filename = dialog.open();
+      if (Strings.isNullOrEmpty(filename)) {
+        return;
+      }
+
       SerializableMetaStore sms = new SerializableMetaStore( metaStore );
       FileOutputStream fos = new FileOutputStream( filename );
       fos.write( sms.toJson().getBytes( "UTF-8" ));
@@ -557,12 +567,12 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       fos.close();
 
       MessageBox box = new MessageBox( shell, SWT.CLOSE | SWT.ICON_INFORMATION );
-      box.setText( "Metastore exported" );
-      box.setMessage( "All current metastore entries were exported to "+filename);
+      box.setText( "Metastore" );
+      box.setMessage( "Metastore exportado com sucesso em: "+filename);
       box.open();
 
     } catch(Exception e) {
-      new KettleErrorDialog( shell, "Error", "Error exporting metastore json", e );
+      new KettleErrorDialog( shell, "Error", "Ocorreu um erro ao exportar o metastore.", e );
     }
 
   }
