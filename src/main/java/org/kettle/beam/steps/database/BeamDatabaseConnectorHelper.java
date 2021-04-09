@@ -113,57 +113,6 @@ public class BeamDatabaseConnectorHelper {
         return sql;
     }
 
-    public static ValueMetaInterface createValueMeta(String name, int type){
-        switch (type){
-
-            case Types.BINARY :
-            case Types.BLOB :
-            case Types.CLOB :
-            case Types.LONGVARBINARY:
-            case Types.NCLOB:
-            case Types.VARBINARY: return new ValueMetaBinary(name);
-
-            case Types.BIT :
-            case Types.BOOLEAN : return new ValueMetaBoolean(name);
-
-            case Types.CHAR : return new ValueMetaString(name);
-
-            case Types.DATALINK: return new ValueMetaInternetAddress(name);
-
-            case Types.DATE: return new ValueMetaDate(name);
-
-            case Types.DECIMAL:
-            case Types.DOUBLE:
-            case Types.FLOAT:
-            case Types.REAL: return new ValueMetaNumber(name);
-
-            case Types.NUMERIC: return new ValueMetaBigNumber(name);
-
-            case Types.BIGINT :
-            case Types.INTEGER:
-            case Types.SMALLINT:
-            case Types.TINYINT: return new ValueMetaInteger(name);
-
-            case Types.JAVA_OBJECT: return new ValueMetaSerializable(name);
-
-            case Types.LONGNVARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.NCHAR:
-            case Types.NULL:
-            case Types.NVARCHAR:
-            case Types.OTHER:
-            case Types.VARCHAR: return new ValueMetaString(name);
-
-            case Types.TIME:
-            case Types.TIME_WITH_TIMEZONE:
-            case Types.TIMESTAMP:
-            case Types.TIMESTAMP_WITH_TIMEZONE: return new ValueMetaTimestamp(name);
-
-            default: return new ValueMetaString(name);
-
-        }
-    }
-
     //endregion
 
 }

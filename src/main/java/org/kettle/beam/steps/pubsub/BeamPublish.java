@@ -10,6 +10,7 @@ import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.cloud.pubsub.v1.Publisher;
 import org.apache.commons.lang.StringUtils;
+import org.kettle.beam.util.AuthUtil;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.trans.Trans;
@@ -30,7 +31,6 @@ public class BeamPublish extends BaseStep implements StepInterface {
 
   //region Attributes
 
-  public static final String GOOGLE_ENVIRONMENT_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
   private GoogleCredentials credentials;
 
   //endregion
@@ -110,26 +110,10 @@ public class BeamPublish extends BaseStep implements StepInterface {
   }
 
 
-  private GoogleCredentials getCredentials() {
+  private GoogleCredentials getCredentials() throws Exception {
     if(this.credentials != null){return this.credentials;}
-    String configPath = System.getenv(GOOGLE_ENVIRONMENT_VARIABLE);
-    InputStream inputStream = null;
-    GoogleCredentials credentials;
-    if(StringUtils.isNotEmpty(configPath)){
-      try {
-        inputStream = new FileInputStream(configPath);
-      }catch (Exception ex){
-        inputStream = null;
-      }
-    }
-    if(inputStream == null){
-      this.log.logError(BeamConst.STRING_BEAM_PUBLISH_PLUGIN_ID + " -> Erro: Não foi possível carregar o arquivo de credenciais do Google Cloud, favor configurar a variável de ambiente '" + GOOGLE_ENVIRONMENT_VARIABLE + "' apontando para o arquivo JSON com as credenciais.");
-    }
-    try {
-      this.credentials = GoogleCredentials.fromStream(inputStream);
-    } catch (Exception e) {
-      this.log.logError(BeamConst.STRING_BEAM_PUBLISH_PLUGIN_ID + " -> Erro ao carregar o arquivo de credenciais do Google Cloud.", e);
-    }
+    String configPath = System.getenv(BeamConst.GOOGLE_CREDENTIALS_ENVIRONMENT_VARIABLE);
+    this.credentials = AuthUtil.getCredentials(configPath);
     return this.credentials;
   }
 
