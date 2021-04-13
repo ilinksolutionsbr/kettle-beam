@@ -135,7 +135,7 @@ public class BeamConsume extends BaseStep implements StepInterface {
     props.put("retries", 0);
     props.put("max.request.size", 512000);
     props.put("max.partition.fetch.bytes", 512000);
-    props.put("max.poll.records", 500);
+    props.put("max.poll.records", 1);
 
     for (ConfigOption configOption : meta.getConfigOptions()) {
       Object value;
