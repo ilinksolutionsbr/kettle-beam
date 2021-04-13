@@ -2,7 +2,6 @@ package org.kettle.beam.steps.bq;
 
 import com.google.cloud.bigquery.*;
 import com.google.common.base.Strings;
-import org.kettle.beam.steps.database.BeamDatabaseConnectorHelper;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -10,6 +9,9 @@ import org.pentaho.di.core.row.value.*;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class BeamBQInput extends BaseStep implements StepInterface {
@@ -26,6 +28,10 @@ public class BeamBQInput extends BaseStep implements StepInterface {
      * @param transMeta         The TransInfo of which the step stepMeta is part of.
      * @param trans             The (running) transformation to obtain information shared among the steps.
      */
+
+    public static final String PARTITION_DATE_FORMAT = "yyyy-MM-dd";
+    public static final String PARTITION_HOUR_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+
     public BeamBQInput(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans ) {
         super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
     }
@@ -86,7 +92,24 @@ public class BeamBQInput extends BaseStep implements StepInterface {
             Object[] newRow = new Object[outputRowMeta.size()];
             int index = 0;
             for (FieldValue value : row) {
-                newRow[index] = value.getValue();
+                //Inicia a conversão de tipos
+                if(value.isNull()){
+                    newRow[index] = value.getValue();
+                } else {
+                    Class<?> clazz = outputRowMeta.getValueMetaList().get(index).getNativeDataTypeClass();
+                    String stringValue = value.getStringValue();
+                    if(clazz.equals(Date.class)) {
+                        if(stringValue.length() > 10) {
+                            SimpleDateFormat formatter = new SimpleDateFormat(PARTITION_HOUR_FORMAT);
+                            newRow[index] = formatter.parse(stringValue);
+                        } else {
+                            SimpleDateFormat formatter = new SimpleDateFormat(PARTITION_DATE_FORMAT);
+                            newRow[index] = formatter.parse(stringValue);
+                        }
+                    } else {
+                        newRow[index] = org.kettle.beam.core.util.Strings.convert(stringValue, clazz);
+                    }
+                }
                 index++;
             }
             this.putRow(outputRowMeta, newRow);
