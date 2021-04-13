@@ -6,12 +6,15 @@ import org.apache.beam.sdk.io.FileSystemRegistrar;
 import org.apache.beam.sdk.util.common.ReflectHelpers;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +57,8 @@ public class BeamConst {
   public static final String FILE_GET_FIELDS_TYPE_NUMBER = "Number";
   public static final String FILE_GET_FIELDS_TYPE_TIMESTAMP = "Timestamp";
   public static final String FILE_GET_FIELDS_TYPE_DATE = "Date";
+
+  public static final String GOOGLE_CREDENTIALS_ENVIRONMENT_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
 
   private static List<String[]> gcpWorkerCodeDescriptions = Arrays.asList(
     new String[] { "n1-standard-1", "Standard machine type with 1 vCPU and 3.75 GB of memory." },
@@ -147,6 +152,56 @@ public class BeamConst {
     return descriptions;
   }
 
+  public static ValueMetaInterface createValueMeta(String name, int type){
+    switch (type){
+
+      case Types.BINARY :
+      case Types.BLOB :
+      case Types.CLOB :
+      case Types.LONGVARBINARY:
+      case Types.NCLOB:
+      case Types.VARBINARY: return new ValueMetaBinary(name);
+
+      case Types.BIT :
+      case Types.BOOLEAN : return new ValueMetaBoolean(name);
+
+      case Types.CHAR : return new ValueMetaString(name);
+
+      case Types.DATALINK: return new ValueMetaInternetAddress(name);
+
+      case Types.DATE: return new ValueMetaDate(name);
+
+      case Types.DECIMAL:
+      case Types.DOUBLE:
+      case Types.FLOAT:
+      case Types.REAL: return new ValueMetaNumber(name);
+
+      case Types.NUMERIC: return new ValueMetaBigNumber(name);
+
+      case Types.BIGINT :
+      case Types.INTEGER:
+      case Types.SMALLINT:
+      case Types.TINYINT: return new ValueMetaInteger(name);
+
+      case Types.JAVA_OBJECT: return new ValueMetaSerializable(name);
+
+      case Types.LONGNVARCHAR:
+      case Types.LONGVARCHAR:
+      case Types.NCHAR:
+      case Types.NULL:
+      case Types.NVARCHAR:
+      case Types.OTHER:
+      case Types.VARCHAR: return new ValueMetaString(name);
+
+      case Types.TIME:
+      case Types.TIME_WITH_TIMEZONE:
+      case Types.TIMESTAMP:
+      case Types.TIMESTAMP_WITH_TIMEZONE: return new ValueMetaTimestamp(name);
+
+      default: return new ValueMetaString(name);
+
+    }
+  }
 
   public static final List<String> findLibraryFilesToStage( String baseFolder, String pluginFolders, boolean includeParent, boolean includeBeam ) throws IOException {
 

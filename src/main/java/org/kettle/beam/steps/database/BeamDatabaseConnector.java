@@ -1,6 +1,7 @@
 package org.kettle.beam.steps.database;
 
 import com.google.cloud.Tuple;
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMeta;
@@ -212,7 +213,7 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
             for(int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                 columnName = resultSet.getMetaData().getColumnName(i);
                 columnType = resultSet.getMetaData().getColumnType(i);
-                valueMeta = BeamDatabaseConnectorHelper.createValueMeta(columnName, columnType);
+                valueMeta = BeamConst.createValueMeta(columnName, columnType);
                 outputRowMeta.addValueMeta(valueMeta);
                 columns.add(columnName);
                 columnsOriginalType.add(columnType);

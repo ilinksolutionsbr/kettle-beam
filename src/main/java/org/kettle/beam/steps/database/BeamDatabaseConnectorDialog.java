@@ -9,6 +9,7 @@ import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.core.util.Web;
+import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
@@ -497,7 +498,7 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
                     String[] fields = new String[3];
                     fields[0] = metadata.getColumnName(i);
                     fields[1] = "";
-                    ValueMetaInterface typeName = BeamDatabaseConnectorHelper.createValueMeta(metadata.getColumnName(i), metadata.getColumnType(i));
+                    ValueMetaInterface typeName = BeamConst.createValueMeta(metadata.getColumnName(i), metadata.getColumnType(i));
                     fields[2] = typeName.getTypeDesc();
                     tblFields.add(fields);
                 }

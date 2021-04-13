@@ -1,6 +1,7 @@
 
 package org.kettle.beam.steps.bq;
 
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Field;
@@ -28,12 +29,15 @@ import org.kettle.beam.core.KettleErrorDialog;
 import org.kettle.beam.core.fn.BQSchemaAndRecordToKettleFn;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.core.util.Web;
-import org.kettle.beam.perspective.BeamHelper;
+import org.kettle.beam.util.AuthUtil;
+import org.kettle.beam.util.BeamConst;
+import org.kettle.beam.util.DatabaseUtil;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.variables.Variables;
@@ -42,17 +46,24 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 
 public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInterface {
   private static Class<?> PKG = BeamBQInputDialog.class; // for i18n purposes, needed by Translator2!!
   private final BeamBQInputMeta input;
+  public static final String BIGQUERY_JDBC_DRIVER = "com.simba.googlebigquery.jdbc42.Driver";
+  public static final String BIGQUERY_AUTH_URL = "jdbc:bigquery://https://www.googleapis.com/bigquery/v2:443;";
 
   int middle;
   int margin;
@@ -272,39 +283,84 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
     try {
 
       BeamBQInputMeta meta = new BeamBQInputMeta();
-      getInfo(meta);
+//      getInfo(meta);
 
-      BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+      RowMetaInterface rowMeta = new RowMeta();
 
-      if ( StringUtils.isNotEmpty( meta.getDatasetId() ) &&
-           StringUtils.isNotEmpty( meta.getTableId() )) {
+      if(wQuery.getText().isEmpty()) {
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
 
-        Table table = bigQuery.getTable(
-          transMeta.environmentSubstitute( meta.getDatasetId()),
-          transMeta.environmentSubstitute( meta.getTableId() )
-        );
+        if ( StringUtils.isNotEmpty( wDatasetId.getText() ) &&
+                StringUtils.isNotEmpty( wTableId.getText() )) {
 
-        TableDefinition definition = table.getDefinition();
-        Schema schema = definition.getSchema();
-        FieldList fieldList = schema.getFields();
+          Table table = bigQuery.getTable(
+                  transMeta.environmentSubstitute( wDatasetId.getText() ),
+                  transMeta.environmentSubstitute( wTableId.getText() )
+          );
 
-        RowMetaInterface rowMeta = new RowMeta();
-        for ( int i = 0; i< fieldList.size(); i++) {
-          Field field = fieldList.get( i );
+          TableDefinition definition = table.getDefinition();
+          Schema schema = definition.getSchema();
 
-          String name = field.getName();
-          String type = field.getType().name();
+          FieldList fieldList = schema.getFields();
+          wFields.clearAll();
 
-          int kettleType = BQSchemaAndRecordToKettleFn.AvroType.valueOf( type ).getKettleType();
-          rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( name, kettleType ) );
+          for ( int i = 0; i< fieldList.size(); i++) {
+            Field field = fieldList.get( i );
+
+            String name = field.getName();
+            String type = field.getType().name();
+
+            int kettleType = BQSchemaAndRecordToKettleFn.AvroType.valueOf( type ).getKettleType();
+            rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( name, kettleType ) );
+          }
+        } else {
+          throw new Exception("Devem ser informados os nomes de dataset e tabela para obter os campos");
         }
+      } else {
+        try {
+          //Removendo ponto e vírgula final caso haja
+          String sql = wQuery.getText();
 
-        BaseStepDialog.getFieldsFromPrevious( rowMeta, wFields, 1, new int[] { 1 }, new int[] { 3 }, -1, -1, true, null );
+          List<String> queryTypes = new ArrayList<>(Arrays.asList("DELETE", "UPDATE", "TRUNCATE"));
+          boolean hasOnlySelect = queryTypes.stream().noneMatch(s -> sql.toUpperCase().contains(s));
+
+          if(hasOnlySelect) {
+            String connectionString = buildConnectionString();
+
+            //Recuperando a informação dos metadados - nome da coluna e tipo, para criar os retornos
+            ResultSetMetaData metadata = DatabaseUtil.executeGetFieldsQuery(sql, BIGQUERY_JDBC_DRIVER, connectionString, null, null);
+            wFields.clearAll();
+
+            for (int i = 1; i <= metadata.getColumnCount(); i++){
+              int kettleType = BQSchemaAndRecordToKettleFn.AvroType.valueOf( metadata.getColumnTypeName(i) ).getKettleType();
+              rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( metadata.getColumnName(i), kettleType ) );
+            }
+          } else {
+            throw new Exception("Só é possível obter campos usando uma consulta quando esta for somente do tipo SELECT");
+          }
+        } catch (Exception ex) {
+          SimpleMessageDialog.openWarning(shell, "Aviso", "Erro encontrado: " + ex.getMessage());
+        }
       }
 
+      BaseStepDialog.getFieldsFromPrevious( rowMeta, wFields, 1, new int[] { 1 }, new int[] { 3 }, -1, -1, true, null );
     } catch ( Exception e ) {
       new KettleErrorDialog( shell, "Error", "Error getting BQ fields", e );
     }
+  }
+
+  private String buildConnectionString() throws Exception {
+    StringBuilder connection = new StringBuilder();
+    String configPath = System.getenv(BeamConst.GOOGLE_CREDENTIALS_ENVIRONMENT_VARIABLE);
+    ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) AuthUtil.getCredentials(configPath);
+
+    connection.append(BIGQUERY_AUTH_URL)
+              .append("ProjectId=").append(serviceAccount.getProjectId())
+              .append(";OAuthType=0;")
+              .append("OAuthServiceAcctEmail=").append(serviceAccount.getClientEmail())
+              .append(";OAuthPvtKeyPath=").append(configPath).append(";");
+
+    return connection.toString();
   }
 
 
