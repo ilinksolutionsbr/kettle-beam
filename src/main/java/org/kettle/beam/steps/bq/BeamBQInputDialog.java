@@ -321,7 +321,7 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
           //Removendo ponto e vírgula final caso haja
           String sql = wQuery.getText();
 
-          List<String> queryTypes = new ArrayList<>(Arrays.asList("DELETE", "UPDATE", "TRUNCATE"));
+          List<String> queryTypes = new ArrayList<>(Arrays.asList("DELETE", "UPDATE", "TRUNCATE", "MERGE"));
           boolean hasOnlySelect = queryTypes.stream().noneMatch(s -> sql.toUpperCase().contains(s));
 
           if(hasOnlySelect) {
