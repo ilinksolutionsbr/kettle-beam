@@ -10,6 +10,7 @@ import org.kettle.beam.core.util.JsonRowMeta;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.steps.database.BeamDatabaseConnectorHelper;
 import org.kettle.beam.steps.database.BeamDatabaseConnectorMeta;
+import org.kettle.beam.util.DatabaseUtil;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.row.RowMetaInterface;
@@ -52,7 +53,7 @@ public class BeamDatabaseConnectorHandler extends BeamBaseStepHandler implements
         String rowMetaJson = rowMeta != null ? JsonRowMeta.toJson(rowMeta) : null;
 
         List<String> parameters = new ArrayList<>();
-        String sql = BeamDatabaseConnectorHelper.getInstance().prepareSQL(metadata.getQuery(), parameters);
+        String sql = DatabaseUtil.prepareSQL(metadata.getQuery(), parameters);
 
         Map<String, String> configuration = new HashMap<>();
         for(String parameter : parameters){
@@ -64,8 +65,8 @@ public class BeamDatabaseConnectorHandler extends BeamBaseStepHandler implements
         if(BeamDatabaseConnectorHelper.QUERY_TYPE_SELECT.equalsIgnoreCase(queryType)){
             BeamDatabaseConnectorQueryTransform transform = new BeamDatabaseConnectorQueryTransform(
                     stepMeta.getName()
-                    , metadata.getDatabase()
-                    , BeamDatabaseConnectorHelper.getInstance().getDriver(metadata.getDatabase())
+                    , metadata.getDatabaseType()
+                    , BeamDatabaseConnectorHelper.getInstance().getDriver(metadata.getDatabaseType())
                     , this.transMeta.environmentSubstitute(metadata.getConnectionString())
                     , this.transMeta.environmentSubstitute(metadata.getUsername())
                     , this.transMeta.environmentSubstitute(metadata.getPassword())
@@ -84,8 +85,8 @@ public class BeamDatabaseConnectorHandler extends BeamBaseStepHandler implements
 
             BeamDatabaseConnectorUpdateTransform transform = new BeamDatabaseConnectorUpdateTransform(
                     stepMeta.getName()
-                    , metadata.getDatabase()
-                    , BeamDatabaseConnectorHelper.getInstance().getDriver(metadata.getDatabase())
+                    , metadata.getDatabaseType()
+                    , BeamDatabaseConnectorHelper.getInstance().getDriver(metadata.getDatabaseType())
                     , this.transMeta.environmentSubstitute(metadata.getConnectionString())
                     , this.transMeta.environmentSubstitute(metadata.getUsername())
                     , this.transMeta.environmentSubstitute(metadata.getPassword())

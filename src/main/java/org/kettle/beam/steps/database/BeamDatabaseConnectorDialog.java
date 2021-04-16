@@ -1,6 +1,5 @@
 package org.kettle.beam.steps.database;
 
-import com.google.cloud.Tuple;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.FormAttachment;
@@ -10,10 +9,13 @@ import org.eclipse.swt.widgets.*;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.core.util.Web;
 import org.kettle.beam.util.BeamConst;
+import org.kettle.beam.util.DatabaseUtil;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.plugins.PluginInterface;
+import org.pentaho.di.core.row.RowMeta;
+import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.*;
 import org.pentaho.di.core.util.Utils;
@@ -32,7 +34,6 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Map;
 
 
 /**
@@ -51,7 +52,10 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
     private int middle;
     private int margin;
 
-    private Combo cboDatabase;
+    private Combo cboDatabaseType;
+    private TextVar txtServer;
+    private TextVar txtPort;
+    private TextVar txtDatabaseName;
     private TextVar txtConnectionString;
     private TextVar txtUsername;
     private TextVar txtPassword;
@@ -137,24 +141,74 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         Control lastControl = wStepname;
 
 
-        Label lblDatabase = new Label( shell, SWT.RIGHT );
-        lblDatabase.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.Database" ) );
-        props.setLook(lblDatabase);
+        Label lblDatabaseType = new Label( shell, SWT.RIGHT );
+        lblDatabaseType.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.DatabaseType" ) );
+        props.setLook(lblDatabaseType);
         formData = new FormData();
         formData.left = new FormAttachment( 0, 0 );
         formData.top = new FormAttachment( lastControl, margin );
         formData.right = new FormAttachment( middle, -margin );
-        lblDatabase.setLayoutData(formData);
-        this.cboDatabase = new Combo( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-        props.setLook( this.cboDatabase );
-        this.cboDatabase.setItems( BeamDatabaseConnectorHelper.getInstance().getDatabases());
+        lblDatabaseType.setLayoutData(formData);
+        this.cboDatabaseType = new Combo( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        props.setLook( this.cboDatabaseType);
+        this.cboDatabaseType.setItems( BeamDatabaseConnectorHelper.getInstance().getDatabases());
         formData = new FormData();
         formData.left = new FormAttachment( middle, 0 );
-        formData.top = new FormAttachment( lblDatabase, 0, SWT.CENTER );
+        formData.top = new FormAttachment( lblDatabaseType, 0, SWT.CENTER );
         formData.right = new FormAttachment( 100, 0 );
-        this.cboDatabase.setLayoutData(formData);
-        lastControl = this.cboDatabase;
+        this.cboDatabaseType.setLayoutData(formData);
+        lastControl = this.cboDatabaseType;
 
+        Label lblServer = new Label( shell, SWT.RIGHT );
+        lblServer.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.Server" ) );
+        props.setLook( lblServer );
+        formData = new FormData();
+        formData.left = new FormAttachment( 0, 0 );
+        formData.top = new FormAttachment( lastControl, margin );
+        formData.right = new FormAttachment( middle, -margin );
+        lblServer.setLayoutData(formData);
+        this.txtServer = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        props.setLook(this.txtServer);
+        formData = new FormData();
+        formData.left = new FormAttachment( middle, 0 );
+        formData.top = new FormAttachment(lblServer, 0, SWT.CENTER );
+        formData.right = new FormAttachment( 100, 0 );
+        this.txtServer.setLayoutData(formData);
+        lastControl = this.txtServer;
+
+        Label lblPort = new Label( shell, SWT.RIGHT );
+        lblPort.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.Port" ) );
+        props.setLook( lblPort );
+        formData = new FormData();
+        formData.left = new FormAttachment( 0, 0 );
+        formData.top = new FormAttachment( lastControl, margin );
+        formData.right = new FormAttachment( middle, -margin );
+        lblPort.setLayoutData(formData);
+        this.txtPort = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        props.setLook(this.txtPort);
+        formData = new FormData();
+        formData.left = new FormAttachment( middle, 0 );
+        formData.top = new FormAttachment(lblPort, 0, SWT.CENTER );
+        formData.right = new FormAttachment( 100, 0 );
+        this.txtPort.setLayoutData(formData);
+        lastControl = this.txtPort;
+
+        Label lblDbName = new Label( shell, SWT.RIGHT );
+        lblDbName.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.DatabaseName" ) );
+        props.setLook( lblDbName );
+        formData = new FormData();
+        formData.left = new FormAttachment( 0, 0 );
+        formData.top = new FormAttachment( lastControl, margin );
+        formData.right = new FormAttachment( middle, -margin );
+        lblDbName.setLayoutData(formData);
+        this.txtDatabaseName = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+        props.setLook(this.txtDatabaseName);
+        formData = new FormData();
+        formData.left = new FormAttachment( middle, 0 );
+        formData.top = new FormAttachment(lblDbName, 0, SWT.CENTER );
+        formData.right = new FormAttachment( 100, 0 );
+        this.txtDatabaseName.setLayoutData(formData);
+        lastControl = this.txtDatabaseName;
 
         Label lblConnectionString = new Label( shell, SWT.RIGHT );
         lblConnectionString.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.ConnectionString" ) );
@@ -172,7 +226,6 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         formData.right = new FormAttachment( 100, 0 );
         this.txtConnectionString.setLayoutData(formData);
         lastControl = this.txtConnectionString;
-
 
         Label lblUsername = new Label( shell, SWT.RIGHT );
         lblUsername.setText( BaseMessages.getString( PACKAGE, "BeamDatabaseConnector.Username" ) );
@@ -320,13 +373,15 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         };
 
         wStepname.addSelectionListener( this.lsDef );
-        this.cboDatabase.addSelectionListener( this.lsDef );
+        this.cboDatabaseType.addSelectionListener( this.lsDef );
+        this.txtServer.addSelectionListener( this.lsDef );
+        this.txtPort.addSelectionListener( this.lsDef );
+        this.txtDatabaseName.addSelectionListener( this.lsDef );
         this.txtConnectionString.addSelectionListener( this.lsDef );
         this.txtUsername.addSelectionListener( this.lsDef );
         this.txtPassword.addSelectionListener( this.lsDef );
         this.cboQueryType.addSelectionListener( this.lsDef );
         this.txtQuery.addSelectionListener( this.lsDef );
-
 
         // Detect X or ALT-F4 or something that kills this window...
         this.shell.addShellListener(new ShellAdapter() {
@@ -369,7 +424,10 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
     public void getData( ) {
         this.wStepname.setText( stepname );
-        this.cboDatabase.setText(Const.NVL(this.metadata.getDatabase(), ""));
+        this.cboDatabaseType.setText(Const.NVL(this.metadata.getDatabaseType(), ""));
+        this.txtServer.setText(Const.NVL(this.metadata.getServer(), ""));
+        this.txtPort.setText(Const.NVL(this.metadata.getPort(), ""));
+        this.txtDatabaseName.setText(Const.NVL(this.metadata.getDatabaseName(), ""));
         this.txtConnectionString.setText(Const.NVL(this.metadata.getConnectionString(), ""));
         this.txtUsername.setText(Const.NVL(this.metadata.getUsername(), ""));
         this.txtPassword.setText(Const.NVL(this.metadata.getPassword(), ""));
@@ -441,9 +499,12 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         }
     }
 
-    private void getInfo(BeamDatabaseConnectorMeta metadata) {
+    private void getInfo(BeamDatabaseConnectorMeta metadata) throws Exception {
         stepname = wStepname.getText();
-        metadata.setDatabase(cboDatabase.getText());
+        metadata.setDatabaseType(cboDatabaseType.getText());
+        metadata.setServer(txtServer.getText());
+        metadata.setPort(txtPort.getText());
+        metadata.setDatabaseName(txtDatabaseName.getText());
         metadata.setConnectionString(txtConnectionString.getText());
         metadata.setUsername(txtUsername.getText());
         metadata.setPassword(txtPassword.getText());
@@ -489,20 +550,22 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
                 //Removendo ponto e vírgula final caso haja
                 String sql = txtQuery.getText();
 
-                ResultSet result = this.executeGetFieldsQuery(sql, cboDatabase.getText(), txtConnectionString.getText(), txtUsername.getText(), txtPassword.getText());
+                String connectionUrl = DatabaseUtil.getConnectionUrl(cboDatabaseType.getText(), txtServer.getText(), txtPort.getText(), txtDatabaseName.getText(), txtConnectionString.getText());
+
+                ResultSet result = this.executeGetFieldsQuery(sql, cboDatabaseType.getText(), connectionUrl, txtUsername.getText(), txtPassword.getText());
 
                 //Recuperando a informação dos metadados - nome da coluna e tipo, para criar os retornos
                 ResultSetMetaData metadata = result.getMetaData();
+
+                RowMetaInterface rowMeta = new RowMeta();
                 tblFields.clearAll();
+
                 for (int i = 1; i <= metadata.getColumnCount(); i++){
-                    String[] fields = new String[3];
-                    fields[0] = metadata.getColumnName(i);
-                    fields[1] = "";
                     ValueMetaInterface typeName = BeamConst.createValueMeta(metadata.getColumnName(i), metadata.getColumnType(i));
-                    fields[2] = typeName.getTypeDesc();
-                    tblFields.add(fields);
+                    rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( metadata.getColumnName(i), typeName.getType() ) );
                 }
 
+                BaseStepDialog.getFieldsFromPrevious( rowMeta, tblFields, 1, new int[] { 1 }, new int[] { 3 }, -1, -1, true, null );
             } catch (Exception ex) {
                 SimpleMessageDialog.openWarning(shell, "Aviso", "Erro encontrado: " + ex.getMessage());
             }
@@ -511,10 +574,14 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
 
     private void checkFields() throws Exception {
 
+        boolean isCustomUrlEmpty = Strings.isNullOrEmpty(txtConnectionString.getText());
+
         if (Utils.isEmpty(wStepname.getText())) {return;}
-        if (Strings.isNullOrEmpty(cboDatabase.getText())) {throw new Exception("Banco de dados nao informado.");}
-        if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(cboDatabase.getText())) {throw new Exception("Banco de dados invalido.");}
-        if (Strings.isNullOrEmpty(txtConnectionString.getText())) {throw new Exception("URL de conexão nao informado.");}
+        if (Strings.isNullOrEmpty(cboDatabaseType.getText())) {throw new Exception("Tipo de banco de dados nao informado.");}
+        if (!BeamDatabaseConnectorHelper.getInstance().getDrivers().containsKey(cboDatabaseType.getText())) {throw new Exception("Tipo de banco de dados invalido.");}
+        if (isCustomUrlEmpty && Strings.isNullOrEmpty(txtServer.getText())) {throw new Exception("Servidor nao informado.");}
+        if (isCustomUrlEmpty && Strings.isNullOrEmpty(txtPort.getText())) {throw new Exception("Porta nao informada.");}
+        if (isCustomUrlEmpty && Strings.isNullOrEmpty(txtDatabaseName.getText())) {throw new Exception("Nome da base de dados nao informado.");}
         if (Strings.isNullOrEmpty(txtUsername.getText())) {throw new Exception("Usuario nao informado.");}
         if (Strings.isNullOrEmpty(txtPassword.getText())) {throw new Exception("Senha nao informado.");}
         if (Strings.isNullOrEmpty(cboQueryType.getText())) {throw new Exception("Tipo de query nao informado.");}
@@ -522,14 +589,14 @@ public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepD
         if (Strings.isNullOrEmpty(txtQuery.getText())) {throw new Exception("Query nao informado.");}
     }
 
-    public ResultSet executeGetFieldsQuery(String sql, String database, String connectionString, String username, String password) throws SQLException, ClassNotFoundException {
+    public ResultSet executeGetFieldsQuery(String sql, String databaseType, String connectionString, String username, String password) throws SQLException, ClassNotFoundException {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        String driver = BeamDatabaseConnectorHelper.getInstance().getDriver(database);
+        String driver = BeamDatabaseConnectorHelper.getInstance().getDriver(databaseType);
 
         java.util.List<String> parameters = new ArrayList<>();
-        sql = BeamDatabaseConnectorHelper.getInstance().prepareSQL(sql, parameters);
+        sql = DatabaseUtil.prepareSQL(sql, parameters);
 
         Class.forName(driver);
         connection = DriverManager.getConnection(connectionString, username, password);

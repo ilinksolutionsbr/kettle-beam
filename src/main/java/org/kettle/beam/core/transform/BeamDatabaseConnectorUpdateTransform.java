@@ -27,7 +27,7 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
 
     //region Attributes
 
-    private String database;
+    private String databaseType;
     private String driver;
     private String connectionString;
     private String username;
@@ -55,7 +55,7 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
     public BeamDatabaseConnectorUpdateTransform() {}
 
     public BeamDatabaseConnectorUpdateTransform(String stepname
-            , String database
+            , String databaseType
             , String driver
             , String connectionString
             , String username
@@ -70,7 +70,7 @@ public class BeamDatabaseConnectorUpdateTransform extends PTransform<PCollection
 
         this.stepname = stepname;
 
-        this.database = database;
+        this.databaseType = databaseType;
         this.driver = driver;
         this.connectionString = connectionString;
         this.username = username;

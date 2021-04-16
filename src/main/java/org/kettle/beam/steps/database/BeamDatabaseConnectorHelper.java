@@ -83,34 +83,14 @@ public class BeamDatabaseConnectorHelper {
     private void initialize(){
         this.getDrivers().put("Microsoft SQL Server", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
         this.getDrivers().put("MySQL", "com.mysql.jdbc.Driver");
-        this.getDrivers().put("Postgre SQL", "org.postgresql.Driver");
-        this.getDrivers().put("JTDS", "net.sourceforge.jtds.jdbc.Driver");
+        this.getDrivers().put("PostgreSQL", "org.postgresql.Driver");
+        this.getDrivers().put("jTDS", "net.sourceforge.jtds.jdbc.Driver");
 
         this.getQueryTypes().put("Insert", QUERY_TYPE_INSERT);
         this.getQueryTypes().put("Update", QUERY_TYPE_UPDATE);
         this.getQueryTypes().put("Delete", QUERY_TYPE_DELETE);
         this.getQueryTypes().put("Select", QUERY_TYPE_SELECT);
 
-    }
-
-    public String prepareSQL(String sql, List<String> parameters){
-        if(Strings.isNullOrEmpty(sql) || parameters == null){return sql;}
-        sql = sql.replace("\n\r", " ").replace("\n", " ").replace("\r", " ").replace("\t", " ");
-        int startIndex;
-        int endIndex;
-        String variable;
-        String sqlPart1;
-        String sqlPart2;
-        while ((startIndex = sql.indexOf("${")) >= 0){
-            endIndex = sql.indexOf("}");
-            if(endIndex <= startIndex){break;}
-            variable = sql.substring(startIndex, endIndex+1);
-            sqlPart1 = sql.substring(0, startIndex);
-            sqlPart2 = sql.substring(endIndex+1);
-            sql = sqlPart1 + "?" + sqlPart2;
-            parameters.add(variable.substring(2, variable.length()-1));
-        }
-        return sql;
     }
 
     //endregion

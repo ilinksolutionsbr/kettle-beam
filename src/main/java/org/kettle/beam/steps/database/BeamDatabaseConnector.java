@@ -2,6 +2,7 @@ package org.kettle.beam.steps.database;
 
 import com.google.cloud.Tuple;
 import org.kettle.beam.util.BeamConst;
+import org.kettle.beam.util.DatabaseUtil;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMeta;
@@ -55,19 +56,20 @@ public class BeamDatabaseConnector extends BaseStep implements StepInterface {
         PreparedStatement preparedStatement = null;
 
         try {
-            String database = this.getParentVariableSpace().environmentSubstitute(meta.getDatabase());
-            String connectionString = this.getParentVariableSpace().environmentSubstitute(meta.getConnectionString());
+            String databaseType = this.getParentVariableSpace().environmentSubstitute(meta.getDatabaseType());
+            String connectionString = DatabaseUtil.getConnectionUrl(databaseType, meta.getServer(), meta.getPort(), meta.getDatabaseName(), meta.getConnectionString());
+            String connectionUrl = this.getParentVariableSpace().environmentSubstitute(connectionString);
             String username = this.getParentVariableSpace().environmentSubstitute(meta.getUsername());
             String password = this.getParentVariableSpace().environmentSubstitute(meta.getPassword());
             String queryType = this.getParentVariableSpace().environmentSubstitute(meta.getQueryType());
             String sql = meta.getQuery();
-            String driver = BeamDatabaseConnectorHelper.getInstance().getDriver(database);
+            String driver = BeamDatabaseConnectorHelper.getInstance().getDriver(databaseType);
 
             List<String> parameters = new ArrayList<>();
-            sql = BeamDatabaseConnectorHelper.getInstance().prepareSQL(sql, parameters);
+            sql = DatabaseUtil.prepareSQL(sql, parameters);
 
             Class.forName(driver);
-            connection = DriverManager.getConnection(connectionString, username, password);
+            connection = DriverManager.getConnection(connectionUrl, username, password);
             connection.setAutoCommit(false);
             preparedStatement = connection.prepareStatement(sql);
 

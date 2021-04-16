@@ -281,10 +281,6 @@ public class BeamBQInputDialog extends BaseStepDialog implements StepDialogInter
 
   public void getFields() {
     try {
-
-      BeamBQInputMeta meta = new BeamBQInputMeta();
-//      getInfo(meta);
-
       RowMetaInterface rowMeta = new RowMeta();
 
       if(wQuery.getText().isEmpty()) {

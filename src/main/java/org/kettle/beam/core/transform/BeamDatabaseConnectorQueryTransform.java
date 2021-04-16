@@ -1,37 +1,23 @@
 package org.kettle.beam.core.transform;
 
-import com.google.cloud.Tuple;
-import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.PTransform;
-import org.apache.beam.sdk.transforms.Values;
-import org.apache.beam.sdk.transforms.View;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PDone;
 import org.kettle.beam.core.BeamKettle;
 import org.kettle.beam.core.KettleRow;
-import org.kettle.beam.core.coder.KettleRowCoder;
 import org.kettle.beam.core.coder.KettleRowSimpleCoder;
-import org.kettle.beam.core.util.JsonRowMeta;
 import org.kettle.beam.steps.database.FieldInfo;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettleValueException;
-import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +25,7 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
 
     //region Attributes
 
-    private String database;
+    private String databaseType;
     private String driver;
     private String connectionString;
     private String username;
@@ -67,7 +53,7 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
     public BeamDatabaseConnectorQueryTransform() {}
 
     public BeamDatabaseConnectorQueryTransform(String stepname
-            , String database
+            , String databaseType
             , String driver
             , String connectionString
             , String username
@@ -82,7 +68,7 @@ public class BeamDatabaseConnectorQueryTransform extends PTransform<PBegin, PCol
 
         this.stepname = stepname;
 
-        this.database = database;
+        this.databaseType = databaseType;
         this.driver = driver;
         this.connectionString = connectionString;
         this.username = username;
