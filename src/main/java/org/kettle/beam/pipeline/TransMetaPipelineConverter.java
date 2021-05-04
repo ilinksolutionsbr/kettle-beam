@@ -118,6 +118,7 @@ public class TransMetaPipelineConverter {
     stepHandlers.put( BeamConst.STRING_BEAM_BIGQUERY_OUTPUT_PLUGIN_ID, new BeamBigQueryOutputStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses ) );
     stepHandlers.put( BeamConst.STRING_BEAM_KAFKA_CONSUME_PLUGIN_ID, new BeamKafkaInputStepHandler( beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses ) );
     stepHandlers.put( BeamConst.STRING_BEAM_KAFKA_PRODUCE_PLUGIN_ID, new BeamKafkaOutputStepHandler( beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses ) );
+    stepHandlers.put( BeamConst.STRING_BEAM_FIRESTORE_INPUT_PLUGIN_ID, new BeamFirestoreInputStepHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     stepHandlers.put( BeamConst.STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID, new BeamFirestoreOutputStepHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     stepHandlers.put( BeamConst.STRING_BEAM_DATABASE_PLUGIN_ID, new BeamDatabaseConnectorHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     genericStepHandler = new BeamGenericStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses );

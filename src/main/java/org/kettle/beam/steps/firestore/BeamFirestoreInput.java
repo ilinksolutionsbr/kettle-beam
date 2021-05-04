@@ -1,15 +1,14 @@
 package org.kettle.beam.steps.firestore;
 
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
-import java.util.ArrayList;
-import java.util.List;
-import org.kettle.beam.util.BeamConst;
+import com.google.cloud.datastore.*;
+
+import java.util.*;
+
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.row.RowDataUtil;
+import org.pentaho.di.core.exception.KettlePluginException;
+import org.pentaho.di.core.row.RowMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.*;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -36,64 +35,131 @@ public class BeamFirestoreInput extends BaseStep implements StepInterface {
    * @param transMeta         The TransInfo of which the step stepMeta is part of.
    * @param trans             The (running) transformation to obtain information shared among the steps.
    */
+
+  public static final String TYPE_STRING = "STRING";
+
   public BeamFirestoreInput( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans ) {
-    
+
       super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
-  @Override 
+  @Override
   public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
 
-    BeamFirestoreInputMeta metaData = (BeamFirestoreInputMeta)this.getStepMeta().getStepMetaInterface();
-    System.out.println(BeamConst.STRING_BEAM_FIRESTORE_INPUT_PLUGIN_ID + "-> " + metaData.getEntity());
-        
-    // Obtendo instancia de operações com o Datastore.
-    Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+    BeamFirestoreInputMeta meta = (BeamFirestoreInputMeta)smi;
 
-    String kind = "";
-    
+      RowMeta outputRowMeta = new RowMeta();
+      for(FirestoreField field : meta.getFields()){
+          outputRowMeta.addValueMeta(this.createValueMeta(field));
+      }
+
     // The kind for the new entity
-    if(metaData.getEntity() != null){
-        
-        kind = metaData.getEntity();
-        
+    if(meta.getKind() != null){
 
-        Query<Entity> query = Query.newEntityQueryBuilder()
-                .setKind(kind)
-                .build();
+        String kind = meta.getKind();
 
-        QueryResults<Entity> results = datastore.run(query);
-        
-//        List<Entity> allData = new ArrayList<>();
-        
-        while (results.hasNext()) {
-            
-            Entity currentEntity = results.next();
+        if(meta.getFields().isEmpty()) {
 
-//            allData.add(currentEntity);
+        } else {
+            // Obtendo instancia de operações com o Datastore.
+            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+            Query<Entity> query = Query.newEntityQueryBuilder()
+                    .setKind(kind)
+                    .setLimit(10)
+                    .build();
+
+            QueryResults<Entity> results = datastore.run(query);
+
+            try {
+                if(results.hasNext()) {
+                    while (results.hasNext()) {
+                        results.forEachRemaining(projectionEntity -> {
+                            this.flush(outputRowMeta, projectionEntity);
+                        });
+                    }
+                } else {
+                    throw new KettlePluginException("A kind informada não existe ou não possui nenhum registro");
+                }
+            } catch (Exception ex) {
+                this.log.logError("Google Firestore Input", ex);
+                this.setOutputDone();
+                throw new KettleException(ex.getMessage(), ex);
+            }
         }
-        
-//        Object[] aux = new Object[allData.size()];
-//        
-//        for(int i = 0; i < allData.size(); i ++){
-//            
-//            aux[i] = allData.get(i);
-//        }
-//        
-//        Object[] out_row = RowDataUtil.createResizedCopy(row, smi.getTableFields().size() - 1);
-//
-//        Object[] outputRow = RowDataUtil.addValueData(row, smi.getTableFields().size() - 1, "dummy value");        
-//  
-//        RowDataUtil.cr
-//        
-//        putRow(getInputRowMeta(), outputRow);   
+
+        this.setOutputDone();
+
+        return false;
     } else {
-        
-        log.logError("Kind/Entity vazia!");
+        log.logError("Kind vazia!");
         return false;
     }
-        
-    return true;
   }
+
+    private void flush(RowMeta outputRowMeta, Entity entity) {
+        try{
+            if(outputRowMeta.size() == 0){return;}
+            Object[] newRow = new Object[outputRowMeta.size()];
+            int index = 0;
+
+            Map<String, Value<?>> properties = entity.getProperties();
+
+            for(Map.Entry<String, Value<?>> entry: properties.entrySet()) {
+                String type = entry.getValue().getType().name();
+                Object value = entry.getValue().get();
+
+                if(value == null) {
+                    newRow[index] = null;
+                } else if(type.equals(TYPE_STRING)) {
+                    newRow[index] = value;
+                } else {
+                    Class<?> clazz = outputRowMeta.getValueMetaList().get(index).getNativeDataTypeClass();
+                    String stringValue = String.valueOf(value);
+                    newRow[index] = org.kettle.beam.core.util.Strings.convert(stringValue, clazz);
+                }
+                index++;
+            }
+            this.putRow(outputRowMeta, newRow);
+            if (isRowLevel()) {
+                logRowlevel("Google Firestore Input", outputRowMeta.getString(newRow));
+            }
+        }catch (Exception ex){
+            this.log.logError("Google Firestore Input", ex);
+        }
+    }
+
+    private ValueMetaInterface createValueMeta(FirestoreField field){
+        if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_BIG_NUMBER)){
+            return new ValueMetaBigNumber(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_BINARY)) {
+            return new ValueMetaBinary(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_BOOLEAN)) {
+            return new ValueMetaBoolean(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_DATE)) {
+            return new ValueMetaDate(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_INTEGER)) {
+            return new ValueMetaInteger(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_INTERNET_ADDRESS)) {
+            return new ValueMetaInternetAddress(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_NUMBER)) {
+            return new ValueMetaNumber(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_STRING)) {
+            return new ValueMetaString(field.getName());
+
+        } else if(field.getKettleType().equalsIgnoreCase(FirestoreField.BEAM_DATATYPE_TIMESTAMP)) {
+            return new ValueMetaTimestamp(field.getName());
+
+        } else{
+            return new ValueMetaString(field.getName());
+        }
+    }
 }
 

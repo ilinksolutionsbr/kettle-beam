@@ -37,7 +37,7 @@ import org.w3c.dom.Node;
  */
 @Step(
         id = BeamConst.STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID,
-        name = "Beam GCP Firestore : Output",
+        name = "Beam Firestore Output",
         description = "Output data from GCP Firestore",
         image = "beam-gcp-firestore-output.svg",
         categoryDescription = "Big Data"

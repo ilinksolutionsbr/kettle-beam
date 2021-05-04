@@ -91,6 +91,8 @@ public class BeamOutputTransform extends PTransform<PCollection<KettleRow>, PDon
       //
       if (windowed) {
         write = write.withWindowedWrites().withNumShards( 4 ); // TODO config
+      } else {
+        write = write.withoutSharding();
       }
 
       stringCollection.apply(write);

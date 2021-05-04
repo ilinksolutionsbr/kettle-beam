@@ -49,7 +49,7 @@ public class BeamFirestoreOutputTransform extends PTransform<PCollection<KettleR
     private List<String> xpPluginClasses;
 
     // Log and count errors.
-    private static final Logger LOG = LoggerFactory.getLogger( BeamBQOutputTransform.class );
+    private static final Logger LOG = LoggerFactory.getLogger( BeamFirestoreOutputTransform.class );
     private static final Counter numErrors = Metrics.counter( "main", "BeamFirestoreOutputError" );
 
     public BeamFirestoreOutputTransform() {
