@@ -2,7 +2,7 @@ package org.kettle.beam.steps.firestore;
 
 import com.google.cloud.datastore.*;
 
-import java.util.*;
+import java.util.Map;
 
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettlePluginException;
