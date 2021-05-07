@@ -65,7 +65,7 @@ public class BeamFirestoreInputTransform extends PTransform<PBegin, PCollection<
             //
 
             if(Strings.isNullOrEmpty(gqlQuery)) {
-                gqlQuery = "select * from " + this.kind + " limit 10";
+                gqlQuery = "select * from " + this.kind;
                 LOG.info("No GQL query provided, using default query");
             }
 
@@ -79,7 +79,7 @@ public class BeamFirestoreInputTransform extends PTransform<PBegin, PCollection<
                     .apply(datastoreRead)
                     .apply(ParDo.of(firestoreEntityToKettleRowFn));
 
-            return output;
+                return output;
 
         } catch ( Exception e ) {
             numErrors.inc();

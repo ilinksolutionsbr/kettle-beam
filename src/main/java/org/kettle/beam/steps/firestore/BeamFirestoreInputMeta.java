@@ -41,9 +41,10 @@ import org.w3c.dom.Node;
 public class BeamFirestoreInputMeta extends BaseStepMeta implements StepMetaInterface {
 
     public static final String KIND = "kind";
+    public static final String QUERY = "gqlQuery";
 
     private String kind;
-    private String gqlQuery;
+    private String query;
 
     private List<FirestoreField> fields;
 
@@ -87,6 +88,7 @@ public class BeamFirestoreInputMeta extends BaseStepMeta implements StepMetaInte
         StringBuffer xml = new StringBuffer();
 
         xml.append(XMLHandler.addTagValue(KIND, kind));
+        xml.append(XMLHandler.addTagValue(QUERY, query));
         xml.append( XMLHandler.openTag( "fields" ) );
         for ( FirestoreField field : fields ) {
             xml.append( XMLHandler.openTag( "field" ) );
@@ -103,6 +105,7 @@ public class BeamFirestoreInputMeta extends BaseStepMeta implements StepMetaInte
     public void loadXML(Node stepNode, List<DatabaseMeta> databases, IMetaStore metaStore) throws KettleXMLException {
         
         kind = XMLHandler.getTagValue(stepNode, KIND);
+        query = XMLHandler.getTagValue(stepNode, QUERY);
 
         Node fieldsNode = XMLHandler.getSubNode( stepNode, "fields" );
         List<Node> fieldNodes = XMLHandler.getNodes( fieldsNode, "field" );
@@ -131,12 +134,12 @@ public class BeamFirestoreInputMeta extends BaseStepMeta implements StepMetaInte
         this.kind = kind;
     }
 
-    public String getGqlQuery() {
-        return gqlQuery;
+    public String getQuery() {
+        return query;
     }
 
-    public void setGqlQuery(String gqlQuery) {
-        this.gqlQuery = gqlQuery;
+    public void setQuery(String query) {
+        this.query = query;
     }
 
     public List<FirestoreField> getFields() {

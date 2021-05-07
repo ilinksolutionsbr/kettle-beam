@@ -2,6 +2,7 @@ package org.kettle.beam.steps.firestore;
 
 import java.awt.Desktop;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +20,7 @@ import org.kettle.beam.core.fn.FirestoreEntityToKettleRowFn;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettlePluginException;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.row.RowMeta;
@@ -53,6 +55,9 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
 
     private TextVar wKind;
     private TableView wFields;
+    private TextVar wQuery;
+
+    private RowMetaInterface rowMeta;
 
     /**
      * Construtor padrão
@@ -130,6 +135,24 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
         wKind.setLayoutData(fdEntity);
         lastControl = wKind;
 
+        Label wlQuery = new Label( shell, SWT.LEFT );
+        wlQuery.setText( BaseMessages.getString( PKG, "BeamInputFirestore.Query" ) );
+        props.setLook( wlQuery );
+        FormData fdlQuery = new FormData();
+        fdlQuery.left = new FormAttachment( 0, 0 );
+        fdlQuery.top = new FormAttachment( lastControl, margin );
+        fdlQuery.right = new FormAttachment( 100, 0 );
+        wlQuery.setLayoutData( fdlQuery );
+        wQuery = new TextVar( transMeta, shell, SWT.LEFT | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL );
+        props.setLook( wQuery, Props.WIDGET_STYLE_FIXED);
+        FormData fdQuery = new FormData();
+        fdQuery.left = new FormAttachment( 0, 0 );
+        fdQuery.top = new FormAttachment( wlQuery, margin );
+        fdQuery.right = new FormAttachment( 100, 0 );
+        fdQuery.bottom = new FormAttachment( wlQuery, 250);
+        wQuery.setLayoutData( fdQuery );
+        lastControl = wQuery;
+
         Label wlFields = new Label(shell, SWT.LEFT);
         wlFields.setText( BaseMessages.getString(PKG, "BeamInputFirestore.Fields" ));
         props.setLook( wlFields );
@@ -176,6 +199,7 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
 
         wStepname.addSelectionListener(lsDef);
         wKind.addSelectionListener(lsDef);
+        wQuery.addSelectionListener(lsDef);
 
         // Detect X or ALT-F4 or something that kills this window...
         shell.addListener(SWT.Close, e -> cancel());
@@ -217,47 +241,69 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
 
     public void getFields() {
         try {
-            RowMetaInterface rowMeta = new RowMeta();
+            this.rowMeta = new RowMeta();
+            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
-            if(!wKind.getText().isEmpty()) {
-                Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+            if(wQuery.getText().isEmpty()) {
+                if(!wKind.getText().isEmpty()) {
 
-                Query<Entity> query = Query.newEntityQueryBuilder()
-                        .setKind(wKind.getText())
-                        .setLimit(1)
-                        .build();
+                    Query<Entity> query = Query.newEntityQueryBuilder()
+                            .setKind(wKind.getText())
+                            .setLimit(1)
+                            .build();
 
-                QueryResults<Entity> results = datastore.run(query);
+                    QueryResults<Entity> results = datastore.run(query);
 
-                if(results.hasNext()) {
-                    while (results.hasNext()) {
-                        Entity currentEntity = results.next();
-                        Map<String, Value<?>> properties = currentEntity.getProperties();
-                        wFields.clearAll();
-
-                        // Using Avro Type for conversion
-                        properties.forEach((name, value) -> {
-                            try {
-                                String type = value.getType().name();
-
-                                int kettleType = FirestoreEntityToKettleRowFn.AvroType.valueOf( type ).getKettleType();
-                                rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( name, kettleType ) );
-                            } catch (KettlePluginException ke) {
-                                throw new RuntimeException(ke);
-                            }
-                        });
-                    }
+                    addFields(results);
                 } else {
-                    SimpleMessageDialog.openWarning(this.shell, "Aviso", "A kind informada não existe ou não possui nenhum registro para obter os campos");
+                    SimpleMessageDialog.openWarning(this.shell, "Aviso", "O nome da kind deve ser informado para obter os campos");
                 }
             } else {
-                SimpleMessageDialog.openWarning(this.shell, "Aviso", "O nome da kind deve ser informado para obter os campos");
+                GqlQuery<?> gqlQuery = GqlQuery.newGqlQueryBuilder(wQuery.getText()).build();
+
+                QueryResults<?> results = datastore.run(gqlQuery);
+
+                addFields(results);
             }
 
-            BaseStepDialog.getFieldsFromPrevious( rowMeta, wFields, 1, new int[] { 1 }, new int[] { 3 }, -1, -1, true, null );
+            BaseStepDialog.getFieldsFromPrevious( this.rowMeta, wFields, 1, new int[] { 1 }, new int[] { 3 }, -1, -1, true, null );
         } catch ( Exception e ) {
             new KettleErrorDialog( shell, "Error", "Error getting Firestore fields", e );
         }
+    }
+
+    private void addFields(QueryResults<?> results) {
+        wFields.clearAll();
+        Map<String, Value<?>> properties = new HashMap<>();
+
+        if(results.hasNext()) {
+            Class<?> clazz = results.getResultClass();
+            while (results.hasNext()) {
+                if(clazz.equals(Entity.class)) {
+                    Entity result = (Entity) results.next();
+                    properties = result.getProperties();
+                } else if (clazz.equals(ProjectionEntity.class)) {
+                    ProjectionEntity result = (ProjectionEntity) results.next();
+                    properties = result.getProperties();
+                } else {
+                    SimpleMessageDialog.openWarning(this.shell, "Aviso", "O tipo de dado retornado nao e valido para os padroes da aplicacao");
+                }
+            }
+        } else {
+            SimpleMessageDialog.openWarning(this.shell, "Aviso", "A kind informada nao existe ou nao possui nenhum registro para obter os campos");
+        }
+
+        // Using Avro Type for conversion
+        properties.forEach((name, value) -> {
+            try {
+                String type = value.getType().name();
+
+                int kettleType = FirestoreEntityToKettleRowFn.AvroType.valueOf( type ).getKettleType();
+                this.rowMeta.addValueMeta( ValueMetaFactory.createValueMeta( name, kettleType ) );
+            } catch (KettlePluginException ke) {
+                throw new RuntimeException(ke);
+            }
+        });
     }
 
     /**
@@ -284,6 +330,7 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
     public void getData() {
         wStepname.setText(stepname);
         wKind.setText(Const.NVL(input.getKind(), ""));
+        wQuery.setText(Const.NVL(input.getQuery(), ""));
 
         for (int i=0;i<input.getFields().size();i++) {
             FirestoreField field = input.getFields().get( i );
@@ -315,7 +362,7 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
     private void ok() {
         try {
             if (Utils.isEmpty(wStepname.getText())) {return;}
-            if (Strings.isNullOrEmpty(wKind.getText()) ) {throw new Exception("Entidade de leitura nao informado.");}
+            if (Strings.isNullOrEmpty(wQuery.getText()) && Strings.isNullOrEmpty(wKind.getText()) ) {throw new Exception("Kind nao informada quando a query esta vazia");}
             getInfo(input);
             dispose();
 
@@ -335,6 +382,7 @@ public class BeamFirestoreInputDialog extends BaseStepDialog implements StepDial
         stepname = wStepname.getText(); // return value
 
         in.setKind(wKind.getText());
+        in.setQuery(wQuery.getText());
         in.getFields().clear();
         for (int i=0;i<wFields.nrNonEmpty();i++) {
             TableItem item = wFields.getNonEmpty( i );

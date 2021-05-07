@@ -44,7 +44,7 @@ public class BeamFirestoreInputStepHandler extends BeamBaseStepHandler implement
                     beamOutputStepMeta.getName(),
                     transMeta.environmentSubstitute(getProjectId()),
                     transMeta.environmentSubstitute(meta.getKind()),
-                    transMeta.environmentSubstitute(meta.getGqlQuery()),
+                    transMeta.environmentSubstitute(meta.getQuery()),
                     JsonRowMeta.toJson(outputRowMeta),
                     stepPluginClasses,
                     xpPluginClasses

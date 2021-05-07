@@ -1,9 +1,12 @@
 package org.kettle.beam.steps.firestore;
 
+import com.google.api.client.util.Strings;
 import com.google.cloud.datastore.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import org.kettle.beam.core.fn.FirestoreEntityToKettleRowFn;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettlePluginException;
 import org.pentaho.di.core.row.RowMeta;
@@ -16,6 +19,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 
 /**
  *
@@ -53,57 +57,71 @@ public class BeamFirestoreInput extends BaseStep implements StepInterface {
           outputRowMeta.addValueMeta(this.createValueMeta(field));
       }
 
-    // The kind for the new entity
-    if(meta.getKind() != null){
+      String queryString = meta.getQuery();
+      String kind = meta.getKind();
 
-        String kind = meta.getKind();
+    Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
-        if(meta.getFields().isEmpty()) {
+    try {
+        if(Strings.isNullOrEmpty(queryString)) {
+            if(!Strings.isNullOrEmpty(kind)) {
 
-        } else {
-            // Obtendo instancia de operações com o Datastore.
-            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+                Query<Entity> query = Query.newEntityQueryBuilder()
+                        .setKind(kind)
+                        .build();
 
-            Query<Entity> query = Query.newEntityQueryBuilder()
-                    .setKind(kind)
-                    .setLimit(10)
-                    .build();
+                QueryResults<Entity> results = datastore.run(query);
 
-            QueryResults<Entity> results = datastore.run(query);
-
-            try {
-                if(results.hasNext()) {
-                    while (results.hasNext()) {
-                        results.forEachRemaining(projectionEntity -> {
-                            this.flush(outputRowMeta, projectionEntity);
-                        });
-                    }
-                } else {
-                    throw new KettlePluginException("A kind informada não existe ou não possui nenhum registro");
-                }
-            } catch (Exception ex) {
-                this.log.logError("Google Firestore Input", ex);
-                this.setOutputDone();
-                throw new KettleException(ex.getMessage(), ex);
+                processQuery(results, outputRowMeta);
+            } else {
+                throw new KettlePluginException("O nome da kind deve ser informado ao buscar todas as entidades");
             }
+        } else {
+            GqlQuery<?> gqlQuery = GqlQuery.newGqlQueryBuilder(queryString).setAllowLiteral(true).build();
+
+            QueryResults<?> results = datastore.run(gqlQuery);
+
+            processQuery(results, outputRowMeta);
         }
-
+    } catch (Exception ex) {
+        this.log.logError("Google Firestore Input", ex);
         this.setOutputDone();
-
-        return false;
-    } else {
-        log.logError("Kind vazia!");
-        return false;
+        throw new KettleException(ex.getMessage(), ex);
     }
+
+    this.setOutputDone();
+
+    return false;
   }
 
-    private void flush(RowMeta outputRowMeta, Entity entity) {
+    private void processQuery(QueryResults<?> results, RowMeta outputRowMeta) throws KettleException {
+        Map<String, Value<?>> properties;
+
+        if(results.hasNext()) {
+            Class<?> clazz = results.getResultClass();
+            while (results.hasNext()) {
+                if(clazz.equals(Entity.class)) {
+                    Entity result = (Entity) results.next();
+                    properties = result.getProperties();
+                } else if (clazz.equals(ProjectionEntity.class)) {
+                    ProjectionEntity result = (ProjectionEntity) results.next();
+                    properties = result.getProperties();
+                } else {
+                    throw new KettleException("O tipo de dado retornado nao e valido para os padroes da aplicacao");
+                }
+
+                flush(outputRowMeta, properties);
+            }
+        } else {
+            throw new KettleException("A kind informada nao existe ou nao possui nenhum registro para obter os campos");
+        }
+    }
+
+    private void flush(RowMeta outputRowMeta, Map<String, Value<?>> properties) {
         try{
             if(outputRowMeta.size() == 0){return;}
             Object[] newRow = new Object[outputRowMeta.size()];
             int index = 0;
-
-            Map<String, Value<?>> properties = entity.getProperties();
 
             for(Map.Entry<String, Value<?>> entry: properties.entrySet()) {
                 String type = entry.getValue().getType().name();
