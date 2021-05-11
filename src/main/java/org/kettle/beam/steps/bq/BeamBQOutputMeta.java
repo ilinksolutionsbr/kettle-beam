@@ -46,6 +46,8 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   public static final String TRUNCATE_TABLE = "truncate_table";
   public static final String FAIL_IF_NOT_EMPTY = "fail_if_not_empty";
   public static final String QUERY = "query";
+  public static final String FIELDS = "fields";
+  public static final String FIELD = "field";
 
   private String projectId;
   private String datasetId;
@@ -55,6 +57,7 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
   private boolean failingIfNotEmpty;
   private String query;
   private String tempLocation;
+  private List<String> fields;
 
   @Override public void setDefault() {
     creatingIfNeeded=true;
@@ -90,6 +93,15 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     xml.append( XMLHandler.addTagValue( TRUNCATE_TABLE, truncatingTable) );
     xml.append( XMLHandler.addTagValue( FAIL_IF_NOT_EMPTY, failingIfNotEmpty) );
     xml.append( XMLHandler.addTagValue( QUERY, query) );
+
+    xml.append( XMLHandler.openTag( FIELDS ) );
+    for ( String fieldName : this.getFields() ) {
+      xml.append( XMLHandler.openTag( FIELD ) );
+      xml.append( XMLHandler.addTagValue( "name", fieldName ) );
+      xml.append( XMLHandler.closeTag( FIELD ) );
+    }
+    xml.append( XMLHandler.closeTag( FIELDS ) );
+
     return xml.toString();
   }
 
@@ -102,6 +114,15 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
     truncatingTable= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, TRUNCATE_TABLE) );
     failingIfNotEmpty= "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepNode, FAIL_IF_NOT_EMPTY) );
     query= XMLHandler.getTagValue( stepNode, QUERY);
+
+    Node fieldsNode = XMLHandler.getSubNode( stepNode, FIELDS );
+    List<Node> fieldNodes = XMLHandler.getNodes( fieldsNode, FIELD );
+    String fieldName;
+    for ( Node fieldNode : fieldNodes ) {
+      fieldName = XMLHandler.getTagValue( fieldNode, "name" );
+      this.getFields().add(fieldName);
+    }
+
   }
 
   /**
@@ -231,6 +252,23 @@ public class BeamBQOutputMeta extends BaseStepMeta implements StepMetaInterface 
    */
   public void setTempLocation( String tempLocation ) {
     this.tempLocation = tempLocation;
+  }
+
+  /**
+   * Gets fields
+   *
+   * @return value of fields
+   */
+  public List<String> getFields() {
+    if(this.fields == null){this.fields = new ArrayList<>();}
+    return this.fields;
+  }
+
+  /**
+   * @param fields The fields to set
+   */
+  public void setFields(List<String> fields) {
+    this.fields = fields;
   }
 
 }

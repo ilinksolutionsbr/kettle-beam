@@ -62,6 +62,7 @@ public class BeamBigQueryOutputStepHandler extends BeamBaseStepHandler implement
               beamOutputMeta.isCreatingIfNeeded(),
               beamOutputMeta.isTruncatingTable(),
               beamOutputMeta.isFailingIfNotEmpty(),
+              beamOutputMeta.getFields(),
               JsonRowMeta.toJson(rowMeta),
               stepPluginClasses,
               xpPluginClasses

@@ -43,6 +43,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   private boolean failIfNotEmpty;
   private List<String> stepPluginClasses;
   private List<String> xpPluginClasses;
+  private List<String> fields;
 
   // Log and count errors.
   private static final Logger LOG = LoggerFactory.getLogger( BeamBQOutputTransform.class );
@@ -51,7 +52,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
   public BeamBQOutputTransform() {
   }
 
-  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, String tempLocation, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public BeamBQOutputTransform( String stepname, String projectId, String datasetId, String tableId, String tempLocation, boolean createIfNeeded, boolean truncateTable, boolean failIfNotEmpty, List<String> fields, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     this.stepname = stepname;
     this.projectId = projectId;
     this.datasetId = datasetId;
@@ -60,6 +61,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
     this.createIfNeeded = createIfNeeded;
     this.truncateTable = truncateTable;
     this.failIfNotEmpty = failIfNotEmpty;
+    this.fields = fields;
     this.rowMetaJson = rowMetaJson;
     this.stepPluginClasses = stepPluginClasses;
     this.xpPluginClasses = xpPluginClasses;
@@ -88,25 +90,40 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
 
       TableSchema tableSchema = new TableSchema();
       List<TableFieldSchema> schemaFields = new ArrayList<>();
-      for ( ValueMetaInterface valueMeta : rowMeta.getValueMetaList() ) {
-        TableFieldSchema schemaField = new TableFieldSchema();
-        schemaField.setName( valueMeta.getName() );
-        switch(valueMeta.getType()){
-          case ValueMetaInterface.TYPE_STRING: schemaField.setType( "STRING" ); break;
-          case ValueMetaInterface.TYPE_INTEGER: schemaField.setType( "INTEGER" ); break;
-          case ValueMetaInterface.TYPE_DATE: schemaField.setType( "DATETIME" ); break;
-          case ValueMetaInterface.TYPE_BOOLEAN: schemaField.setType( "BOOLEAN" ); break;
-          case ValueMetaInterface.TYPE_NUMBER: schemaField.setType( "FLOAT" ); break;
-          case ValueMetaInterface.TYPE_TIMESTAMP: schemaField.setType( "DATETIME" ); break;
-          default:
-            schemaField.setType( "STRING" ); break;
+      for ( ValueMetaInterface valueMeta : rowMeta.getValueMetaList()) {
+        if(this.fields == null || this.fields.size() == 0 || this.fields.contains(valueMeta.getName().trim())) {
+          TableFieldSchema schemaField = new TableFieldSchema();
+          schemaField.setName(valueMeta.getName());
+          switch (valueMeta.getType()) {
+            case ValueMetaInterface.TYPE_STRING:
+              schemaField.setType("STRING");
+              break;
+            case ValueMetaInterface.TYPE_INTEGER:
+              schemaField.setType("INTEGER");
+              break;
+            case ValueMetaInterface.TYPE_DATE:
+              schemaField.setType("DATETIME");
+              break;
+            case ValueMetaInterface.TYPE_BOOLEAN:
+              schemaField.setType("BOOLEAN");
+              break;
+            case ValueMetaInterface.TYPE_NUMBER:
+              schemaField.setType("FLOAT");
+              break;
+            case ValueMetaInterface.TYPE_TIMESTAMP:
+              schemaField.setType("DATETIME");
+              break;
+            default:
+              schemaField.setType("STRING");
+              break;
             //throw new RuntimeException( "Conversion from Kettle value "+valueMeta.toString()+" to BigQuery TableRow isn't supported yet" );
+          }
+          schemaFields.add(schemaField);
         }
-        schemaFields.add(schemaField);
       }
       tableSchema.setFields( schemaFields );
 
-      SerializableFunction<KettleRow, TableRow> formatFunction = new KettleToBQTableRowFn( stepname, rowMetaJson, stepPluginClasses, xpPluginClasses );
+      SerializableFunction<KettleRow, TableRow> formatFunction = new KettleToBQTableRowFn( stepname, fields, rowMetaJson, stepPluginClasses, xpPluginClasses );
 
       BigQueryIO.Write.CreateDisposition createDisposition;
       if (createIfNeeded) {
