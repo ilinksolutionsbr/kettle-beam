@@ -97,6 +97,7 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
           case ValueMetaInterface.TYPE_DATE: schemaField.setType( "DATETIME" ); break;
           case ValueMetaInterface.TYPE_BOOLEAN: schemaField.setType( "BOOLEAN" ); break;
           case ValueMetaInterface.TYPE_NUMBER: schemaField.setType( "FLOAT" ); break;
+          case ValueMetaInterface.TYPE_BIGNUMBER: schemaField.setType( "FLOAT" ); break;
           case ValueMetaInterface.TYPE_TIMESTAMP: schemaField.setType( "DATETIME" ); break;
           default:
             schemaField.setType( "STRING" ); break;

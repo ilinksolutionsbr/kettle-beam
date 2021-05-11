@@ -13,6 +13,7 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -87,7 +88,13 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
               break;
             case ValueMetaInterface.TYPE_BOOLEAN: tableRow.put( valueMeta.getName(), valueMeta.getBoolean( valueData ) ); break;
             case ValueMetaInterface.TYPE_NUMBER: tableRow.put( valueMeta.getName(), valueMeta.getNumber( valueData ) ); break;
-            case ValueMetaInterface.TYPE_BIGNUMBER: tableRow.put( valueMeta.getName(), valueMeta.getBigNumber( valueData ) ); break;
+            case ValueMetaInterface.TYPE_BIGNUMBER:
+              Double doubleValue = (Double) valueData;
+              BigDecimal bigDecimalValueParsed = BigDecimal.valueOf(doubleValue);
+              BigDecimal bigDecimalValue = valueMeta.getBigNumber(bigDecimalValueParsed);
+
+              tableRow.put( valueMeta.getName(), bigDecimalValue );
+              break;
             case ValueMetaInterface.TYPE_NONE: tableRow.put( valueMeta.getName(), valueMeta.getString( valueData ) ); break;
             default:
               throw new RuntimeException( "Data type conversion from Kettle to BigQuery TableRow not supported yet: " +valueMeta.toString());
