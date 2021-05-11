@@ -101,7 +101,9 @@ public class BeamBQOutput extends BaseStep implements StepInterface {
             if(valueMetaList.size() == 0){return;}
             List<Field> fields = new ArrayList<>();
             for(ValueMetaInterface valueMetaInterface : valueMetaList){
-                fields.add(Field.of(valueMetaInterface.getName(), this.getType(valueMetaInterface)));
+                if(meta.getFields().size() == 0 || meta.getFields().contains(valueMetaInterface.getName().trim())) {
+                    fields.add(Field.of(valueMetaInterface.getName(), this.getType(valueMetaInterface)));
+                }
             }
             Schema schema = Schema.of(fields);
             TableId tableId = TableId.of(meta.getDatasetId(), meta.getTableId());
@@ -267,18 +269,26 @@ public class BeamBQOutput extends BaseStep implements StepInterface {
         queryBuilder.append("`");
         queryBuilder.append("(");
 
+        List<String> fields = new ArrayList<>();
+        if(meta.getFields().size() > 0){
+            fields.addAll(meta.getFields());
+        }else{
+            for(Map.Entry<String, Tuple<Object, Integer>> entry : dataSet.entrySet()){
+                fields.add(entry.getKey());
+            }
+        }
         i = 0;
-        for(Map.Entry<String, Tuple<Object, Integer>> entry : dataSet.entrySet()){
+        for(String field : fields){
             if(i > 0){queryBuilder.append(", ");}
-            queryBuilder.append(entry.getKey());
+            queryBuilder.append(field);
             i++;
         }
         queryBuilder.append(") VALUES (");
 
         i = 0;
-        for(Map.Entry<String, Tuple<Object, Integer>> entry : dataSet.entrySet()){
+        for(String field : fields){
             if(i > 0){queryBuilder.append(", ");}
-            queryBuilder.append(this.getValue(entry.getKey(), dataSet));
+            queryBuilder.append(this.getValue(field, dataSet));
             i++;
         }
         queryBuilder.append(")");

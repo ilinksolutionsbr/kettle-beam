@@ -388,7 +388,7 @@ public class BeamJobConfigDialog {
     wGeneralSComp = new ScrolledComposite( wTabFolder, SWT.V_SCROLL | SWT.H_SCROLL );
     wGeneralSComp.setLayout( new FillLayout() );
 
-    wGeneralComp = new Composite( wGeneralSComp, SWT.NO_BACKGROUND );
+    wGeneralComp = new Composite( wGeneralSComp, SWT.COLOR_WIDGET_BACKGROUND );
     props.setLook( wGeneralComp );
 
     FormLayout generalLayout = new FormLayout();
@@ -671,7 +671,7 @@ public class BeamJobConfigDialog {
     wParametersTab = new CTabItem( wTabFolder, SWT.NONE );
     wParametersTab.setText( "Parameters" );
 
-    wParametersComp = new Composite( wTabFolder, SWT.NO_BACKGROUND );
+    wParametersComp = new Composite( wTabFolder, SWT.COLOR_WIDGET_BACKGROUND );
     props.setLook( wParametersComp );
     wParametersComp.setLayout( new FormLayout() );
 

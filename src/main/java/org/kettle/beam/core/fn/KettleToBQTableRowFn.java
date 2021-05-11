@@ -22,6 +22,7 @@ import java.util.List;
 public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, TableRow> {
 
   private String counterName;
+  private List<String> fields;
   private String rowMetaJson;
   private List<String> stepPluginClasses;
   private List<String> xpPluginClasses;
@@ -38,8 +39,9 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
   // Log and count parse errors.
   private static final Logger LOG = LoggerFactory.getLogger( KettleToBQTableRowFn.class );
 
-  public KettleToBQTableRowFn( String counterName, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
+  public KettleToBQTableRowFn( String counterName, List<String> fields, String rowMetaJson, List<String> stepPluginClasses, List<String> xpPluginClasses ) {
     this.counterName = counterName;
+    this.fields = fields;
     this.rowMetaJson = rowMetaJson;
     this.stepPluginClasses = stepPluginClasses;
     this.xpPluginClasses = xpPluginClasses;
@@ -73,31 +75,43 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
         }
         Object valueData = inputRow.getRow()[i];
         if (!valueMeta.isNull( valueData )) {
-          switch ( valueMeta.getType() ) {
-            case ValueMetaInterface.TYPE_STRING: tableRow.put( valueMeta.getName(), valueMeta.getString( valueData ) ); break;
-            case ValueMetaInterface.TYPE_INTEGER: tableRow.put( valueMeta.getName(), valueMeta.getInteger( new Long(valueData.toString()) )); break;
-            case ValueMetaInterface.TYPE_DATE:
-              Date date = valueMeta.getDate( valueData );
-              String formattedDate = simpleDateFormat.format( date );
-              tableRow.put( valueMeta.getName(), formattedDate);
-              break;
-            case ValueMetaInterface.TYPE_TIMESTAMP:
-              Date timestamp = valueMeta.getDate(valueData);
-              String formattedTimestamp = simpleTimestampFormat.format( timestamp );
-              tableRow.put( valueMeta.getName(), formattedTimestamp);
-              break;
-            case ValueMetaInterface.TYPE_BOOLEAN: tableRow.put( valueMeta.getName(), valueMeta.getBoolean( valueData ) ); break;
-            case ValueMetaInterface.TYPE_NUMBER: tableRow.put( valueMeta.getName(), valueMeta.getNumber( valueData ) ); break;
-            case ValueMetaInterface.TYPE_BIGNUMBER:
-              Double doubleValue = (Double) valueData;
-              BigDecimal bigDecimalValueParsed = BigDecimal.valueOf(doubleValue);
-              BigDecimal bigDecimalValue = valueMeta.getBigNumber(bigDecimalValueParsed);
+          if(this.fields == null || this.fields.size() == 0 || this.fields.contains(valueMeta.getName().trim())) {
+            switch (valueMeta.getType()) {
+              case ValueMetaInterface.TYPE_STRING:
+                tableRow.put(valueMeta.getName(), valueMeta.getString(valueData));
+                break;
+              case ValueMetaInterface.TYPE_INTEGER:
+                tableRow.put(valueMeta.getName(), valueMeta.getInteger(new Long(valueData.toString())));
+                break;
+              case ValueMetaInterface.TYPE_DATE:
+                Date date = valueMeta.getDate(valueData);
+                String formattedDate = simpleDateFormat.format(date);
+                tableRow.put(valueMeta.getName(), formattedDate);
+                break;
+              case ValueMetaInterface.TYPE_TIMESTAMP:
+                Date timestamp = valueMeta.getDate(valueData);
+                String formattedTimestamp = simpleTimestampFormat.format(timestamp);
+                tableRow.put(valueMeta.getName(), formattedTimestamp);
+                break;
+              case ValueMetaInterface.TYPE_BOOLEAN:
+                tableRow.put(valueMeta.getName(), valueMeta.getBoolean(valueData));
+                break;
+              case ValueMetaInterface.TYPE_NUMBER:
+                tableRow.put(valueMeta.getName(), valueMeta.getNumber(valueData));
+                break;
+              case ValueMetaInterface.TYPE_BIGNUMBER:
+                Double doubleValue = (Double) valueData;
+                BigDecimal bigDecimalValueParsed = BigDecimal.valueOf(doubleValue);
+                BigDecimal bigDecimalValue = valueMeta.getBigNumber(bigDecimalValueParsed);
 
-              tableRow.put( valueMeta.getName(), bigDecimalValue );
-              break;
-            case ValueMetaInterface.TYPE_NONE: tableRow.put( valueMeta.getName(), valueMeta.getString( valueData ) ); break;
-            default:
-              throw new RuntimeException( "Data type conversion from Kettle to BigQuery TableRow not supported yet: " +valueMeta.toString());
+                tableRow.put( valueMeta.getName(), bigDecimalValue );
+                break;
+              case ValueMetaInterface.TYPE_NONE:
+                tableRow.put(valueMeta.getName(), valueMeta.getString(valueData));
+                break;
+              default:
+                throw new RuntimeException("Data type conversion from Kettle to BigQuery TableRow not supported yet: " + valueMeta.toString());
+            }
           }
         }
 

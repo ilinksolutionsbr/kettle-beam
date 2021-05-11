@@ -2,26 +2,30 @@
 package org.kettle.beam.steps.bq;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Text;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.core.util.Web;
+import org.kettle.beam.steps.database.FieldInfo;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.core.util.Utils;
@@ -36,6 +40,8 @@ import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
+
+import java.awt.*;
 
 
 public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInterface {
@@ -52,8 +58,19 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
   private Button wCreateIfNeeded;
   private Button wTruncateTable;
   private Button wFailIfNotEmpty;
-  private TextVar wQuery;
 
+  private CTabFolder wTabFolder;
+  private CTabItem wFieldsTab;
+  private CTabItem wQueryTab;
+
+  private ScrolledComposite wFieldsSComp;
+  private ScrolledComposite wQuerySComp;
+
+  private Composite wFieldsComp;
+  private Composite wQueryComp;
+
+  private Text wQuery;
+  private TableView tblFields;
 
 
   public BeamBQOutputDialog( Shell parent, Object in, TransMeta transMeta, String sname ) {
@@ -227,26 +244,20 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     this.setButtonPositions( new Button[] { this.wOK, this.wCancel }, this.margin, null );
 
 
-    Label wlQuery = new Label( shell, SWT.LEFT );
-    wlQuery.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.Query" ) );
-    props.setLook( wlQuery );
-    FormData fdlQuery = new FormData();
-    fdlQuery.left = new FormAttachment( 0, 0 );
-    fdlQuery.top = new FormAttachment( lastControl, margin );
-    fdlQuery.right = new FormAttachment( 100, 0 );
-    wlQuery.setLayoutData( fdlQuery );
-    wQuery = new TextVar( transMeta, shell, SWT.LEFT | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL );
-    props.setLook( wQuery, Props.WIDGET_STYLE_FIXED);
-    FormData fdQuery = new FormData();
-    fdQuery.left = new FormAttachment( 0, 0 );
-    fdQuery.top = new FormAttachment( wlQuery, margin );
-    fdQuery.right = new FormAttachment( 100, 0 );
-    fdQuery.bottom = new FormAttachment( wOK, -2*margin);
-    wQuery.setLayoutData( fdQuery );
-    lastControl = wQuery;
+    wTabFolder = new CTabFolder( shell, SWT.BORDER );
+    props.setLook( wTabFolder, Props.WIDGET_STYLE_TAB );
+    wTabFolder.setSimple( false );
+    FormData fdTabFolder = new FormData();
+    fdTabFolder.left = new FormAttachment( 0, 0 );
+    fdTabFolder.top = new FormAttachment( lastControl, margin);
+    fdTabFolder.right = new FormAttachment( 100, 0 );
+    fdTabFolder.bottom = new FormAttachment( wOK, -2*margin);
+    wTabFolder.setLayoutData( fdTabFolder );
 
+    addFieldsTab();
+    addQueryTab();
 
-
+    wTabFolder.setSelection( 0 );
 
     // Add listeners
     lsOK = new Listener() {
@@ -295,6 +306,137 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     return stepname;
   }
 
+
+  private void addFieldsTab(){
+    wFieldsTab = new CTabItem( wTabFolder, SWT.NONE );
+    wFieldsTab.setText( "  Campos  " );
+
+    wFieldsSComp = new ScrolledComposite( wTabFolder, SWT.V_SCROLL | SWT.H_SCROLL );
+    wFieldsSComp.setLayout( new FillLayout() );
+
+    wFieldsComp = new Composite( wFieldsSComp, SWT.COLOR_WIDGET_BACKGROUND );
+    props.setLook( wFieldsComp );
+
+    FormLayout generalLayout = new FormLayout();
+    generalLayout.marginWidth = 0;
+    generalLayout.marginHeight = 0;
+    wFieldsComp.setLayout( generalLayout );
+
+    String[] fieldNames;
+    String[] values = new String[]{"Sim", "Não"};
+    try {
+      fieldNames = this.transMeta.getPrevStepFields(this.stepMeta).getFieldNames();
+    } catch( KettleException e ) {
+      log.logError("Error getting fields from previous steps", e);
+      fieldNames = new String[] {};
+    }
+
+    ColumnInfo fieldColumn = new ColumnInfo( BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Field" ), ColumnInfo.COLUMN_TYPE_TEXT, false, false );
+    ColumnInfo selectColumn = new ColumnInfo( BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select" ), ColumnInfo.COLUMN_TYPE_CCOMBO, values, false );
+    ColumnInfo[] columns = new ColumnInfo[] {fieldColumn, selectColumn,};
+
+    this.tblFields = new TableView( Variables.getADefaultVariableSpace(), wFieldsComp, SWT.NONE, columns, fieldNames != null ? fieldNames.length : 0, null, props);
+    props.setLook( this.tblFields );
+    FormData formData = new FormData();
+    formData.left = new FormAttachment( 0, 0 );
+    formData.top = new FormAttachment( 0, 0 );
+    formData.right = new FormAttachment( 100, 0 );
+    formData.bottom = new FormAttachment( 100, 0);
+    this.tblFields.setLayoutData(formData);
+    this.tblFields.addModifyListener((e) -> {this.refreshTable();});
+
+    if(fieldNames != null) {
+      String fieldName;
+      for (int i = 0; i < fieldNames.length; i++) {
+        fieldName = fieldNames[i];
+        TableItem item = this.tblFields.table.getItem(i);
+        item.setText(1, fieldName);
+        item.setText(2, "Sim");
+      }
+      this.tblFields.removeEmptyRows();
+      this.tblFields.setRowNums();
+      this.tblFields.optWidth(true);
+      this.refreshTable();
+    }
+
+    FormData fdFieldsComp = new FormData();
+    fdFieldsComp.left = new FormAttachment( 0, 0 );
+    fdFieldsComp.top = new FormAttachment( 0, 0 );
+    fdFieldsComp.right = new FormAttachment( 100, 0 );
+    fdFieldsComp.bottom = new FormAttachment( 100, 0 );
+    wFieldsComp.setLayoutData( fdFieldsComp );
+
+    wFieldsComp.pack();
+    Rectangle bounds = wFieldsComp.getBounds();
+
+    wFieldsSComp.setContent( wFieldsComp );
+    wFieldsSComp.setExpandHorizontal( true );
+    wFieldsSComp.setExpandVertical( true );
+    wFieldsSComp.setMinWidth( bounds.width );
+    wFieldsSComp.setMinHeight( bounds.height );
+
+    wFieldsTab.setControl( wFieldsSComp );
+  }
+
+
+  private void refreshTable(){
+    for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
+      TableItem item = tblFields.getNonEmpty(i);
+      if("Sim".equalsIgnoreCase(item.getText(2))){
+        item.setBackground(new Color(Display.getCurrent(),240,254,240));
+      }else{
+        item.setBackground(new Color(Display.getCurrent(),255, 240,244));
+      }
+    }
+    this.tblFields.redraw();
+  }
+
+  private void addQueryTab(){
+    wQueryTab = new CTabItem( wTabFolder, SWT.NONE );
+    wQueryTab.setText( "  Query  " );
+
+    wQuerySComp = new ScrolledComposite( wTabFolder, SWT.V_SCROLL | SWT.H_SCROLL );
+    wQuerySComp.setLayout( new FillLayout() );
+
+    wQueryComp = new Composite( wQuerySComp, SWT.COLOR_WIDGET_BACKGROUND );
+    props.setLook( wQueryComp );
+
+    FormLayout generalLayout = new FormLayout();
+    generalLayout.marginWidth = 0;
+    generalLayout.marginHeight = 0;
+    wQueryComp.setLayout( generalLayout );
+    wQueryComp.setBackground(new Color(Display.getCurrent(),255, 250,245));
+
+    wQuery = new Text( wQueryComp, SWT.LEFT | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL );
+    props.setLook( wQuery, Props.WIDGET_STYLE_FIXED);
+    FormData fdQuery = new FormData();
+    fdQuery.left = new FormAttachment( 0, 0 );
+    fdQuery.top = new FormAttachment( 0, 0 );
+    fdQuery.right = new FormAttachment( 100, 0 );
+    fdQuery.bottom = new FormAttachment( 100, 0);
+    wQuery.setLayoutData( fdQuery );
+    wQuery.setBackground(new Color(Display.getCurrent(),255, 250,245));
+
+    FormData fdQueryComp = new FormData();
+    fdQueryComp.left = new FormAttachment( 0, 0 );
+    fdQueryComp.top = new FormAttachment( 0, 0 );
+    fdQueryComp.right = new FormAttachment( 100, 0 );
+    fdQueryComp.bottom = new FormAttachment( 100, 0 );
+    wQueryComp.setLayoutData( fdQueryComp );
+
+    wQueryComp.pack();
+    Rectangle bounds = wQueryComp.getBounds();
+
+    wQuerySComp.setContent( wQueryComp );
+    wQuerySComp.setExpandHorizontal( true );
+    wQuerySComp.setExpandVertical( true );
+    wQuerySComp.setMinWidth( bounds.width );
+    wQuerySComp.setMinHeight( bounds.height );
+
+    wQueryTab.setControl( wQuerySComp );
+  }
+
+
   /**
    * Método responsável por criar e o botão de ajuda que quando clicado
    * abre uma pagína de ajuda para o componente.
@@ -329,6 +471,18 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wQuery.setText( Const.NVL(input.getQuery(), "") );
     wStepname.selectAll();
     wStepname.setFocus();
+
+    if(input.getFields().size() > 0) {
+      String fieldName;
+      for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
+        TableItem item = tblFields.getNonEmpty(i);
+        fieldName = item.getText(1).trim();
+        item.setText(2, input.getFields().contains(fieldName) ? "Sim" : "Não");
+      }
+    }
+
+    this.refreshTable();
+
   }
 
   private void cancel() {
@@ -363,6 +517,17 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     in.setTruncatingTable( wTruncateTable.getSelection() );
     in.setFailingIfNotEmpty( wFailIfNotEmpty.getSelection() );
     in.setQuery( wQuery.getText() );
+
+    String fieldName;
+    in.getFields().clear();
+    for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
+      TableItem item = tblFields.getNonEmpty(i);
+      fieldName = item.getText(1).trim();
+      if("Sim".equalsIgnoreCase(item.getText(2).trim())) {
+        in.getFields().add(fieldName);
+      }
+    }
+
     input.setChanged();
   }
 }
