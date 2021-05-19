@@ -47,6 +47,7 @@ public class BeamDatabaseConnectorMeta extends BaseStepMeta implements StepMetaI
     public static final String PASSWORD = "password";
     public static final String QUERY_TYPE = "queryType";
     public static final String QUERY = "query";
+    public static final String CONNECTION_STRING_VIEW = "connectionStringView";
 
     private String databaseType;
     private String server;
@@ -58,6 +59,7 @@ public class BeamDatabaseConnectorMeta extends BaseStepMeta implements StepMetaI
     private String queryType;
     private String query;
     private List<FieldInfo> fields;
+    private String connectionStringView;
     private StepDataInterface stepData;
 
     //endregion
@@ -107,6 +109,14 @@ public class BeamDatabaseConnectorMeta extends BaseStepMeta implements StepMetaI
 
     public String getQuery(){return this.query;}
     public void setQuery(String value){this.query = value;}
+
+    public String getConnectionStringView() {
+        return connectionStringView;
+    }
+
+    public void setConnectionStringView(String connectionStringView) {
+        this.connectionStringView = connectionStringView;
+    }
 
     //endregion
 
@@ -169,6 +179,7 @@ public class BeamDatabaseConnectorMeta extends BaseStepMeta implements StepMetaI
         xml.append( XMLHandler.addTagValue( PASSWORD, this.getPassword() ) );
         xml.append( XMLHandler.addTagValue( QUERY_TYPE, this.getQueryType() ) );
         xml.append( XMLHandler.addTagValue( QUERY, this.getQuery() ) );
+        xml.append( XMLHandler.addTagValue( CONNECTION_STRING_VIEW, this.getConnectionStringView() ) );
 
         xml.append( XMLHandler.openTag( "fields" ) );
         for ( FieldInfo field : this.getFields() ) {
@@ -195,6 +206,7 @@ public class BeamDatabaseConnectorMeta extends BaseStepMeta implements StepMetaI
         this.setPassword(XMLHandler.getTagValue( stepNode, PASSWORD ));
         this.setQueryType(XMLHandler.getTagValue( stepNode, QUERY_TYPE ));
         this.setQuery(XMLHandler.getTagValue( stepNode, QUERY ));
+        this.setConnectionStringView(XMLHandler.getTagValue( stepNode, CONNECTION_STRING_VIEW ));
 
         Node fieldsNode = XMLHandler.getSubNode( stepNode, "fields" );
         List<Node> fieldNodes = XMLHandler.getNodes( fieldsNode, "field" );
