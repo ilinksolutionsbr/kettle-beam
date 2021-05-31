@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -52,6 +53,13 @@ public class Json {
         TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};
         Map<String, Object> map = mapper.readValue(json, typeRef);
         return map;
+    }
+
+    public List<Map<String, Object>> deserializeList(String json) throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {};
+        List<Map<String, Object>> list = mapper.readValue(json, typeRef);
+        return list;
     }
 
     //endregion
