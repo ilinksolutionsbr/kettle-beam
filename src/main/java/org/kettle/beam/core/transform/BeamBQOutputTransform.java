@@ -110,6 +110,9 @@ public class BeamBQOutputTransform extends PTransform<PCollection<KettleRow>, PD
             case ValueMetaInterface.TYPE_NUMBER:
               schemaField.setType("FLOAT");
               break;
+            case ValueMetaInterface.TYPE_BIGNUMBER:
+              schemaField.setType( "FLOAT" );
+              break;
             case ValueMetaInterface.TYPE_TIMESTAMP:
               schemaField.setType("DATETIME");
               break;

@@ -45,6 +45,7 @@ public class BeamConst {
   public static final String STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID = "BeamFirestoreOutput";
   public static final String STRING_BEAM_DATABASE_PLUGIN_ID = "BeamDatabaseConnector";
   public static final String STRING_BEAM_JSON_PARSER_PLUGIN_ID = "BeamJSONParser";
+  public static final String STRING_BEAM_PROCEDURE_EXECUTOR_PLUGIN_ID = "BeamProcedureExecutor";
 
   public static final String STRING_KETTLE_BEAM = "Kettle Beam";
 

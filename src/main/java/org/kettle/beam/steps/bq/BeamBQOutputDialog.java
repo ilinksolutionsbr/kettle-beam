@@ -309,7 +309,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
 
   private void addFieldsTab(){
     wFieldsTab = new CTabItem( wTabFolder, SWT.NONE );
-    wFieldsTab.setText( "  Campos  " );
+    wFieldsTab.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.Tab.Fields" ) );
 
     wFieldsSComp = new ScrolledComposite( wTabFolder, SWT.V_SCROLL | SWT.H_SCROLL );
     wFieldsSComp.setLayout( new FillLayout() );
@@ -323,7 +323,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     wFieldsComp.setLayout( generalLayout );
 
     String[] fieldNames;
-    String[] values = new String[]{"Sim", "Não"};
+    String[] values = new String[]{BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.Yes" ), BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.No" )};
     try {
       fieldNames = this.transMeta.getPrevStepFields(this.stepMeta).getFieldNames();
     } catch( KettleException e ) {
@@ -351,7 +351,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
         fieldName = fieldNames[i];
         TableItem item = this.tblFields.table.getItem(i);
         item.setText(1, fieldName);
-        item.setText(2, "Sim");
+        item.setText(2, BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.Yes" ));
       }
       this.tblFields.removeEmptyRows();
       this.tblFields.setRowNums();
@@ -382,7 +382,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
   private void refreshTable(){
     for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
       TableItem item = tblFields.getNonEmpty(i);
-      if("Sim".equalsIgnoreCase(item.getText(2))){
+      if(BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.Yes" ).equalsIgnoreCase(item.getText(2))){
         item.setBackground(new Color(Display.getCurrent(),240,254,240));
       }else{
         item.setBackground(new Color(Display.getCurrent(),255, 240,244));
@@ -393,7 +393,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
 
   private void addQueryTab(){
     wQueryTab = new CTabItem( wTabFolder, SWT.NONE );
-    wQueryTab.setText( "  Query  " );
+    wQueryTab.setText( BaseMessages.getString( PKG, "BeamBQOutputDialog.Tab.Query" ) );
 
     wQuerySComp = new ScrolledComposite( wTabFolder, SWT.V_SCROLL | SWT.H_SCROLL );
     wQuerySComp.setLayout( new FillLayout() );
@@ -477,7 +477,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
       for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
         TableItem item = tblFields.getNonEmpty(i);
         fieldName = item.getText(1).trim();
-        item.setText(2, input.getFields().contains(fieldName) ? "Sim" : "Não");
+        item.setText(2, input.getFields().contains(fieldName) ? BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.Yes" ) : BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.No" ));
       }
     }
 
@@ -523,7 +523,7 @@ public class BeamBQOutputDialog extends BaseStepDialog implements StepDialogInte
     for (int i = 0; i < tblFields.nrNonEmpty(); i++) {
       TableItem item = tblFields.getNonEmpty(i);
       fieldName = item.getText(1).trim();
-      if("Sim".equalsIgnoreCase(item.getText(2).trim())) {
+      if(BaseMessages.getString( PKG, "BeamBQOutputDialog.Column.Select.Yes" ).equalsIgnoreCase(item.getText(2).trim())) {
         in.getFields().add(fieldName);
       }
     }

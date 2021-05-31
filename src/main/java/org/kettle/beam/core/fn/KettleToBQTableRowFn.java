@@ -13,6 +13,7 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -99,7 +100,11 @@ public class KettleToBQTableRowFn implements SerializableFunction<KettleRow, Tab
                 tableRow.put(valueMeta.getName(), valueMeta.getNumber(valueData));
                 break;
               case ValueMetaInterface.TYPE_BIGNUMBER:
-                tableRow.put(valueMeta.getName(), valueMeta.getBigNumber(valueData));
+                Double doubleValue = (Double) valueData;
+                BigDecimal bigDecimalValueParsed = BigDecimal.valueOf(doubleValue);
+                BigDecimal bigDecimalValue = valueMeta.getBigNumber(bigDecimalValueParsed);
+
+                tableRow.put( valueMeta.getName(), bigDecimalValue );
                 break;
               case ValueMetaInterface.TYPE_NONE:
                 tableRow.put(valueMeta.getName(), valueMeta.getString(valueData));
