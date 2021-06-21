@@ -10,16 +10,26 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.kettle.beam.core.util.Strings;
+import org.kettle.beam.steps.bq.BQField;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.*;
 import org.pentaho.di.core.util.Utils;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.ui.core.PropsUI;
 import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
+import org.pentaho.di.ui.core.widget.ColumnInfo;
+import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
+
+import java.math.BigDecimal;
+import java.util.Calendar;
 
 /**
  * Dialog de configuração do Step para converter string em JSON
@@ -29,7 +39,7 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
 
     //region Attributes
 
-    private static Class<?> PACKAGE = BeamJSONParserDialog.class;
+    private static Class<?> PKG = BeamJSONParserDialog.class;
     private BeamJSONParserMeta input;
 
     private String stepName;
@@ -37,6 +47,8 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
     private int margin;
 
     private Combo cboJsonField;
+    private TableView wFields;
+
 
     private RowMetaInterface rowMeta;
 
@@ -85,7 +97,7 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
         FormData formData;
 
         this.shell.setLayout( formLayout );
-        this.shell.setText( BaseMessages.getString( PACKAGE, "BeamJSONParserDialog.DialogTitle" ) );
+        this.shell.setText( BaseMessages.getString( PKG, "BeamJSONParserDialog.DialogTitle" ) );
 
         this.middle = this.props.getMiddlePct();
         this.margin = Const.MARGIN;
@@ -103,7 +115,7 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
 
         // Stepname line
         wlStepname = new Label( shell, SWT.RIGHT );
-        wlStepname.setText( BaseMessages.getString( PACKAGE, "System.Label.StepName" ) );
+        wlStepname.setText( BaseMessages.getString( PKG, "System.Label.StepName" ) );
         props.setLook( wlStepname );
         fdlStepname = new FormData();
         fdlStepname.left = new FormAttachment( 0, 0 );
@@ -122,7 +134,7 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
 
 
         Label lblJsonField = new Label( shell, SWT.RIGHT );
-        lblJsonField.setText( BaseMessages.getString( PACKAGE, "BeamJSONParserDialog.JsonField" ) );
+        lblJsonField.setText( BaseMessages.getString( PKG, "BeamJSONParserDialog.JsonField" ) );
         props.setLook(lblJsonField);
         formData = new FormData();
         formData.left = new FormAttachment( 0, 0 );
@@ -139,20 +151,43 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
         this.cboJsonField.setLayoutData(formData);
         lastControl = this.cboJsonField;
 
-
+        Label wlFields = new Label( shell, SWT.LEFT );
+        wlFields.setText( BaseMessages.getString( PKG, "BeamJSONParserDialog.Fields" ) );
+        props.setLook( wlFields );
+        FormData fdlFields = new FormData();
+        fdlFields.left = new FormAttachment( 0, 0 );
+        fdlFields.top = new FormAttachment( lastControl, margin );
+        fdlFields.right = new FormAttachment( middle, -margin );
+        wlFields.setLayoutData( fdlFields );
 
         this.wOK = new Button( this.shell, SWT.PUSH );
-        this.wOK.setText( BaseMessages.getString( PACKAGE, "System.Button.OK" ) );
+        this.wOK.setText( BaseMessages.getString( PKG, "System.Button.OK" ) );
+        this.wGet = new Button(shell, SWT.PUSH);
+        this.wGet.setText(BaseMessages.getString( PKG, "System.Button.GetFields" ) );
         this.wCancel = new Button( this.shell, SWT.PUSH );
-        this.wCancel.setText( BaseMessages.getString( PACKAGE, "System.Button.Cancel" ) );
-        this.setButtonPositions( new Button[] { this.wOK, this.wCancel }, this.margin, null );
+        this.wCancel.setText( BaseMessages.getString( PKG, "System.Button.Cancel" ) );
+        this.setButtonPositions( new Button[] { this.wOK, this.wGet, this.wCancel }, this.margin, null );
 
-
+        ColumnInfo[] columns = new ColumnInfo[] {
+                new ColumnInfo( BaseMessages.getString( PKG, "BeamJSONParserDialog.Fields.Column.Name" ), ColumnInfo.COLUMN_TYPE_TEXT, false, false ),
+                new ColumnInfo( BaseMessages.getString( PKG, "BeamJSONParserDialog.Fields.Column.NewName" ), ColumnInfo.COLUMN_TYPE_TEXT, false, false ),
+                new ColumnInfo( BaseMessages.getString( PKG, "BeamJSONParserDialog.Fields.Column.KettleType" ), ColumnInfo.COLUMN_TYPE_CCOMBO, ValueMetaFactory.getValueMetaNames(), false ),
+        };
+        wFields = new TableView( Variables.getADefaultVariableSpace(), shell, SWT.NONE, columns, input.getFields().size(), null, props);
+        props.setLook( wFields );
+        FormData fdFields = new FormData();
+        fdFields.left = new FormAttachment( 0, 0 );
+        fdFields.top = new FormAttachment( wlFields, margin );
+        fdFields.right = new FormAttachment( 100, 0 );
+        fdFields.bottom = new FormAttachment( wOK, -2*margin);
+        wFields.setLayoutData( fdFields );
+        lastControl = wFields;
 
         this.lsOK = e -> this.ok();
         this.lsCancel = e -> this.cancel();
 
         this.wOK.addListener( SWT.Selection, this.lsOK );
+        this.wGet.addListener( SWT.Selection, e-> getFields() );
         this.wCancel.addListener( SWT.Selection, this.lsCancel );
 
         this.lsDef = new SelectionAdapter() {
@@ -189,6 +224,16 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
     public void getData( ) {
         this.wStepname.setText( stepname );
         this.cboJsonField.setText(Const.NVL(this.input.getJsonField(), ""));
+        for (int i=0;i<input.getFields().size();i++) {
+            JSONField field = input.getFields().get( i );
+            TableItem item = wFields.table.getItem( i );
+            item.setText( 1, Const.NVL(field.getName(), "") );
+            item.setText( 2, Const.NVL(field.getNewName(), "") );
+            item.setText( 3, Const.NVL(field.getKettleType(), "") );
+        }
+        wFields.removeEmptyRows();
+        wFields.setRowNums();
+        wFields.optWidth( true );
         this.wStepname.selectAll();
         this.wStepname.setFocus();
     }
@@ -204,6 +249,14 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
             if (Utils.isEmpty(wStepname.getText())) {return;}
             if (Strings.isNullOrEmpty(cboJsonField.getText()) ) {throw new Exception("Campo do Json nao informado.");}
             input.setJsonField(cboJsonField.getText());
+            input.getFields().clear();
+            for (int i=0;i<wFields.nrNonEmpty();i++) {
+                TableItem item = wFields.getNonEmpty( i );
+                String name = item.getText(1);
+                String newName = item.getText(2);
+                String kettleType = item.getText(3);
+                input.getFields().add(new JSONField( name, newName, kettleType ));
+            }
             input.setChanged();
             dispose();
 
@@ -212,6 +265,26 @@ public class BeamJSONParserDialog extends BaseStepDialog implements StepDialogIn
 
         }
     }
+
+    private void getFields() {
+        BeamJSONParserModelDialog dialog = new BeamJSONParserModelDialog(this);
+        dialog.open();
+    }
+
+    public void setFields(java.util.List<JSONField> fields) {
+        wFields.clearAll();
+        for (int i=0;i<fields.size();i++) {
+            JSONField field = fields.get( i );
+            TableItem item = new TableItem(wFields.table, SWT.NONE);
+            item.setText( 1, Const.NVL(field.getName(), "") );
+            item.setText( 2, Const.NVL(field.getNewName(), "") );
+            item.setText( 3, Const.NVL(field.getKettleType(), "") );
+        }
+        wFields.removeEmptyRows();
+        wFields.setRowNums();
+        wFields.optWidth( true );
+    }
+
 
     //endregion
 

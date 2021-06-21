@@ -1,6 +1,7 @@
 package org.kettle.beam.steps.formatter;
 
 import org.apache.commons.lang.StringUtils;
+import org.kettle.beam.steps.bq.BQField;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
@@ -9,6 +10,7 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
@@ -19,6 +21,7 @@ import org.pentaho.di.trans.step.*;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,8 +40,11 @@ public class BeamJSONParserMeta extends BaseStepMeta implements StepMetaInterfac
     //region Attributes
 
     private static String JSON_FIELD = "jsonField";
+    private static String FIELDS = "fields";
+    private static String FIELD = "field";
 
     private String jsonField;
+    private List<JSONField> fields;
 
     //endregion
 
@@ -57,6 +63,14 @@ public class BeamJSONParserMeta extends BaseStepMeta implements StepMetaInterfac
     }
     public void setJsonField(String value){
         jsonField = value;
+    }
+
+    public List<JSONField> getFields(){
+        if(fields == null){fields = new ArrayList<>();}
+        return fields;
+    }
+    public void setFields(List<JSONField> value){
+        fields = value;
     }
 
     //endregion
@@ -88,6 +102,7 @@ public class BeamJSONParserMeta extends BaseStepMeta implements StepMetaInterfac
     @Override
     public void setDefault() {
         this.jsonField = "";
+        this.fields = new ArrayList<>();
     }
 
     /**
@@ -123,16 +138,27 @@ public class BeamJSONParserMeta extends BaseStepMeta implements StepMetaInterfac
      */
     @Override
     public void getFields(RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore) throws KettleStepException {
-        if ( StringUtils.isEmpty(this.jsonField) ) {
-            throw new KettleStepException( "Campo 'Json' não especificado." );
+        try {
+            if ( StringUtils.isEmpty(this.jsonField) ) {
+                throw new KettleStepException( "Campo 'Json' não especificado." );
+            }
+            String jsonField = space.environmentSubstitute(this.jsonField);
+
+            ValueMetaInterface valueMeta;
+
+            valueMeta = new ValueMetaString(jsonField);
+            valueMeta.setOrigin(name);
+            inputRowMeta.addValueMeta(valueMeta);
+
+            for ( JSONField field : fields ) {
+                int type = ValueMetaFactory.getIdForValueMeta( field.getKettleType() );
+                valueMeta = ValueMetaFactory.createValueMeta( field.getNewNameOrName(), type, -1, -1 );
+                valueMeta.setOrigin( name );
+                inputRowMeta.addValueMeta( valueMeta );
+            }
+        } catch ( Exception e ) {
+            throw new KettleStepException( "Error getting Beam JSON Parser step output", e );
         }
-        String jsonField = space.environmentSubstitute(this.jsonField);
-
-        ValueMetaInterface valueMeta;
-
-        valueMeta = new ValueMetaString(jsonField);
-        valueMeta.setOrigin(name);
-        inputRowMeta.addValueMeta(valueMeta);
     }
 
     /**
@@ -145,20 +171,40 @@ public class BeamJSONParserMeta extends BaseStepMeta implements StepMetaInterfac
     public String getXML() throws KettleException {
         StringBuffer xml = new StringBuffer();
         xml.append(XMLHandler.addTagValue(JSON_FIELD, this.jsonField));
+
+        xml.append( XMLHandler.openTag( FIELDS ) );
+        for ( JSONField field : fields ) {
+            xml.append( XMLHandler.openTag( FIELD ) );
+            xml.append( XMLHandler.addTagValue( "name", field.getName() ) );
+            xml.append( XMLHandler.addTagValue( "new_name", field.getNewName() ) );
+            xml.append( XMLHandler.addTagValue( "type", field.getKettleType() ) );
+            xml.append( XMLHandler.closeTag( FIELD ) );
+        }
+        xml.append( XMLHandler.closeTag( FIELDS ) );
+
         return xml.toString();
     }
 
     /**
      * Load dos dados da Tela.
      *
-     * @param stepnode
+     * @param stepNode
      * @param databases
      * @param metaStore
      * @throws KettleXMLException
      */
     @Override
-    public void loadXML(Node stepnode, List<DatabaseMeta> databases, IMetaStore metaStore) throws KettleXMLException {
-        this.jsonField = XMLHandler.getTagValue(stepnode, JSON_FIELD);
+    public void loadXML(Node stepNode, List<DatabaseMeta> databases, IMetaStore metaStore) throws KettleXMLException {
+        this.jsonField = XMLHandler.getTagValue(stepNode, JSON_FIELD);
+        Node fieldsNode = XMLHandler.getSubNode( stepNode, FIELDS );
+        List<Node> fieldNodes = XMLHandler.getNodes( fieldsNode, FIELD );
+        fields = new ArrayList<>();
+        for ( Node fieldNode : fieldNodes ) {
+            String name = XMLHandler.getTagValue( fieldNode, "name" );
+            String newName = XMLHandler.getTagValue( fieldNode, "new_name" );
+            String kettleType = XMLHandler.getTagValue( fieldNode, "type" );
+            fields.add( new JSONField( name, newName, kettleType ) );
+        }
     }
 
     //endregion

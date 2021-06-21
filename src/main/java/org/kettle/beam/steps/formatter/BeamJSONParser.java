@@ -47,6 +47,11 @@ public class BeamJSONParser extends BaseStep implements StepInterface {
             BeamJSONParserMeta meta = (BeamJSONParserMeta)smi;
             if(Strings.isNullOrEmpty(meta.getJsonField())){throw new KettleException("Campo Json nao informado.");}
 
+            Map<String, JSONField> fields = new HashMap<>();
+            for(JSONField field : meta.getFields()){
+                fields.put(field.getName().toLowerCase(), field);
+            }
+
             Map<String, Tuple<Object, Integer>> dataSet = this.getDateSet(row);
             if(row.length > 0) {
                 if (!dataSet.containsKey(meta.getJsonField())) {
@@ -59,16 +64,16 @@ public class BeamJSONParser extends BaseStep implements StepInterface {
 
                     if(jsonIndex >= 0 && arrayJsonIndex >= 0){
                         if(jsonIndex < arrayJsonIndex){
-                            this.flushJsonObject(json.substring(jsonIndex));
+                            this.flushJsonObject(json.substring(jsonIndex), fields, meta);
                         }else{
-                            this.flushJsonArray(json.substring(arrayJsonIndex));
+                            this.flushJsonArray(json.substring(arrayJsonIndex), fields, meta);
                         }
 
                     }else if(jsonIndex >= 0){
-                        this.flushJsonObject(json.substring(jsonIndex));
+                        this.flushJsonObject(json.substring(jsonIndex), fields, meta);
 
                     }else if(arrayJsonIndex >= 0){
-                        this.flushJsonArray(json.substring(arrayJsonIndex));
+                        this.flushJsonArray(json.substring(arrayJsonIndex), fields, meta);
 
                     }
 
@@ -118,96 +123,139 @@ public class BeamJSONParser extends BaseStep implements StepInterface {
     }
 
 
-    private void flushJsonObject(String json) throws Exception {
+    private void flushJsonObject(String json, Map<String, JSONField> fields, BeamJSONParserMeta meta) throws Exception {
         Map<String, Object> jsonObject = Json.getInstance().deserialize(json);
-        this.flush(jsonObject);
+        this.flush(jsonObject, fields, meta);
     }
 
-    private void flushJsonArray(String json) throws Exception {
+    private void flushJsonArray(String json, Map<String, JSONField> fields, BeamJSONParserMeta meta) throws Exception {
         List<Map<String, Object>> list = Json.getInstance().deserializeList(json);
         for(Map<String, Object> jsonObject : list){
-            this.flush(jsonObject);
+            this.flush(jsonObject, fields, meta);
         }
     }
 
 
-    private void flush(Map<String, Object> jsonObject) throws KettleStepException {
+    private void flush(Map<String, Object> jsonObject, Map<String, JSONField> fields, BeamJSONParserMeta meta) throws KettleStepException {
         RowMeta rowMeta = new RowMeta();
-        List<Object> row = new ArrayList<>();
-        this.prepareRow(row,rowMeta,"", jsonObject);
-        this.putRow(rowMeta, row.toArray());
+        Map<String, RowValue> row = new HashMap<>();
+        this.prepareRow(row,"", jsonObject, fields);
+        RowValue rowValue;
+
+        List<Object> values = new ArrayList<>();
+        for(JSONField field : meta.getFields()){
+            rowValue = row.get(field.getNewNameOrName());
+            if(rowValue != null) {
+                rowMeta.addValueMeta(rowValue.getMeta());
+                values.add(rowValue.getData());
+            }
+        }
+
+        this.putRow(rowMeta, values.toArray());
         if (isRowLevel()) {
             logRowlevel("Beam Json Parser", jsonObject);
         }
     }
 
-    private void prepareRow(List<Object> row, RowMeta rowMeta, String prefix, Map<String, Object> jsonObject){
+    private void prepareRow(Map<String, RowValue> row, String prefix, Map<String, Object> jsonObject, Map<String, JSONField> fields){
         Object value;
         String attributeName;
+        JSONField field;
+        RowValue rowValue;
+        ValueMetaInterface valueMeta;
+
         for(Map.Entry<String, Object> entry: jsonObject.entrySet()){
             value = entry.getValue();
-            attributeName = prefix + entry.getKey();
-            if(value != null && value instanceof Map) {
-                this.prepareRow(row, rowMeta, attributeName + "_", (Map<String, Object>) value);
+            attributeName = prefix + entry.getKey().trim();
+            field = fields.get(attributeName.toLowerCase());
+            if(field != null) {
+                if (value != null && value instanceof Map) {
+                    this.prepareRow(row, attributeName + "_", (Map<String, Object>) value, fields);
 
-            }else if(value != null && value instanceof List) {
-                List<Map<String, Object>> list = (List<Map<String, Object>>)value;
-                rowMeta.addValueMeta(new ValueMetaInteger(attributeName + "_count"));
-                row.add(Long.parseLong("" + list.size()));
-                int i = 0;
-                for(Map<String, Object> jsonObjectChild : list){
-                    this.prepareRow(row, rowMeta, attributeName + "_" + i + "_", (Map<String, Object>)jsonObjectChild);
-                    i++;
-                }
-
-            }else{
-                rowMeta.addValueMeta(this.createValueMeta(attributeName, entry.getValue()));
-                if(value != null) {
-                    if (value instanceof Byte
-                            || value instanceof Short
-                            || value instanceof Integer) {
-                        value = Long.parseLong(value.toString());
-                    } else if (value instanceof Calendar) {
-                        value = ((Calendar) value).getTime().getTime();
+                } else if (value != null && value instanceof List) {
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) value;
+                    if(fields.containsKey(attributeName + "_count")){
+                        valueMeta = new ValueMetaInteger(fields.get(attributeName + "_count").getNewNameOrName());
+                        rowValue = new RowValue(valueMeta, Long.parseLong("" + list.size()));
+                        row.put(field.getNewNameOrName(), rowValue);
                     }
+                    int i = 0;
+                    for (Map<String, Object> jsonObjectChild : list) {
+                        this.prepareRow(row, attributeName + "_" + i + "_", (Map<String, Object>) jsonObjectChild, fields);
+                        i++;
+                    }
+
+                } else {
+                    valueMeta = this.createValueMeta(field);
+                    if (value != null) {
+                        if (value instanceof Byte
+                                || value instanceof Short
+                                || value instanceof Integer) {
+                            value = Long.parseLong(value.toString());
+                        }
+                    }
+                    row.put(field.getNewNameOrName(), new RowValue(valueMeta, value));
                 }
-                row.add(value);
             }
         }
     }
 
-    private ValueMetaInterface createValueMeta(String name, Object value){
-        if(value == null){
-            return new ValueMetaString(name);
+    private ValueMetaInterface createValueMeta(JSONField field){
+        if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BIG_NUMBER)){
+            return new ValueMetaBigNumber(field.getNewNameOrName());
 
-        }else if(value instanceof java.sql.Date
-                || value instanceof java.util.Date){
-            return new ValueMetaDate(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BINARY)) {
+            return new ValueMetaBinary(field.getNewNameOrName());
 
-        }else if(value instanceof Calendar) {
-            return new ValueMetaTimestamp(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BOOLEAN)) {
+            return new ValueMetaBoolean(field.getNewNameOrName());
 
-        }else if(value instanceof Byte
-                || value instanceof Short
-                || value instanceof Integer) {
-            return new ValueMetaInteger(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_DATE)) {
+            return new ValueMetaDate(field.getNewNameOrName());
 
-        }else if(value instanceof Long) {
-            return new ValueMetaNumber(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_INTEGER)) {
+            return new ValueMetaInteger(field.getNewNameOrName());
 
-        }else if(value instanceof BigDecimal
-                || value instanceof Double
-                || value instanceof Float) {
-            return new ValueMetaBigNumber(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_INTERNET_ADDRESS)) {
+            return new ValueMetaInternetAddress(field.getNewNameOrName());
 
-        }else if(value instanceof Boolean) {
-            return new ValueMetaBoolean(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_NUMBER)) {
+            return new ValueMetaNumber(field.getNewNameOrName());
 
-        }else{
-            return new ValueMetaString(name);
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_STRING)) {
+            return new ValueMetaString(field.getNewNameOrName());
 
+        } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_TIMESTAMP)) {
+            return new ValueMetaTimestamp(field.getNewNameOrName());
+
+        } else{
+            return new ValueMetaString(field.getNewNameOrName());
+        }
+    }
+
+    private class RowValue{
+        private ValueMetaInterface meta;
+        private Object data;
+
+        public ValueMetaInterface getMeta() {
+            return meta;
+        }
+        public void setMeta(ValueMetaInterface meta) {
+            this.meta = meta;
         }
 
+        public Object getData() {
+            return data;
+        }
+        public void setData(Object data) {
+            this.data = data;
+        }
+
+        public RowValue(){}
+        public RowValue(ValueMetaInterface meta, Object data){
+            this.meta = meta;
+            this.data = data;
+        }
     }
 
     //endregion
