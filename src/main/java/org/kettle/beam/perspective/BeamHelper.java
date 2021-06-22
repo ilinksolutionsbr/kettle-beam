@@ -22,36 +22,12 @@
 
 package org.kettle.beam.perspective;
 
-import com.google.cloud.workflows.v1beta.CreateWorkflowRequest;
-import com.google.cloud.workflows.v1beta.LocationName;
-import com.google.cloud.workflows.v1beta.Workflow;
-import com.google.cloud.workflows.v1beta.WorkflowsClient;
-import com.google.protobuf.ByteString;
-import org.apache.beam.runners.dataflow.DataflowRunner;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions;
-import org.apache.beam.runners.direct.DirectRunner;
-import org.apache.beam.runners.flink.FlinkPipelineOptions;
-import org.apache.beam.runners.flink.FlinkRunner;
-import org.apache.beam.runners.spark.SparkPipelineOptions;
-import org.apache.beam.runners.spark.SparkRunner;
-import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.PipelineRunner;
-import org.apache.beam.sdk.metrics.MetricQueryResults;
-import org.apache.beam.sdk.metrics.MetricResult;
-import org.apache.beam.sdk.metrics.MetricResults;
-import org.apache.beam.sdk.metrics.MetricsFilter;
-import org.apache.beam.sdk.options.PipelineOptions;
-import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -63,32 +39,26 @@ import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.job.pipeline.JobPipeline;
 import org.kettle.beam.metastore.*;
 import org.kettle.beam.pipeline.KettleBeamPipelineExecutor;
-import org.kettle.beam.pipeline.TransMetaPipelineConverter;
 import org.kettle.beam.pipeline.fatjar.FatJarBuilder;
+import org.kettle.beam.steps.runners.RunnerParameter;
+import org.kettle.beam.steps.runners.dataflow.BeamDataflowRunnerMeta;
 import org.kettle.beam.util.BeamConst;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.ProgressMonitorAdapter;
 import org.pentaho.di.core.annotations.Step;
-import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.extension.ExtensionPoint;
-import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.logging.LogLevel;
-import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.plugins.KettleURLClassLoader;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
-import org.pentaho.di.job.JobHopMeta;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
-import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.dialog.SimpleMessageDialog;
 import org.pentaho.di.ui.spoon.ISpoonMenuController;
 import org.pentaho.di.ui.spoon.Spoon;
-import org.pentaho.di.ui.spoon.job.JobGraph;
 import org.pentaho.di.ui.spoon.trans.TransGraph;
 import org.pentaho.metastore.api.IMetaStore;
 import org.pentaho.metastore.persist.MetaStoreFactory;
@@ -100,21 +70,15 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuController {
   protected static Class<?> PKG = BeamHelper.class; // for i18n
   protected LogChannelInterface log;
   private static BeamHelper instance = null;
+
+  public static final String TRANSFORMATION_RUNNER_PREFIX = "Transformation: ";
+  public static final String METASTORE_PREFIX = "Local: ";
 
   private Spoon spoon;
 
@@ -147,10 +111,25 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       return;
     }
 
+    // Getting runner steps from the transformation
+    List<StepMeta> runnerSteps = new ArrayList<>();
+    for(StepMeta stepMeta: transMeta.getSteps()) {
+      if(stepMeta.getStepID().toLowerCase().contains("runner")) {
+        runnerSteps.add(stepMeta);
+      }
+    }
+
     MetaStoreFactory<BeamJobConfig> factory = new MetaStoreFactory<>( BeamJobConfig.class, spoon.getMetaStore(), PentahoDefaults.NAMESPACE );
 
     try {
-      List<String> elementNames = factory.getElementNames();
+      List<String> namesOriginal = factory.getElementNames();
+      List<String> elementNames = new ArrayList<>();
+      for(String name: namesOriginal) {
+        elementNames.add(METASTORE_PREFIX + name);
+      }
+      if(!runnerSteps.isEmpty()) {
+        runnerSteps.forEach(s -> elementNames.add(TRANSFORMATION_RUNNER_PREFIX + s.getName()));
+      }
       Collections.sort( elementNames );
       String[] names = elementNames.toArray( new String[ 0 ] );
 
@@ -161,7 +140,13 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       String choice = selectionDialog.open();
       if ( choice != null ) {
 
-        final BeamJobConfig config = factory.loadElement( choice );
+        BeamJobConfig config;
+        if(choice.toLowerCase().contains(TRANSFORMATION_RUNNER_PREFIX.toLowerCase())) {
+          config = parseJobConfig(choice, runnerSteps);
+        } else {
+          choice = choice.split(METASTORE_PREFIX)[0];
+          config = factory.loadElement( choice );
+        }
 
         Runnable runnable = new Runnable() {
           @Override public void run() {
@@ -213,6 +198,47 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
       );
     }
 
+  }
+
+  private BeamJobConfig parseJobConfig(String choice, List<StepMeta> stepsList) {
+    BeamJobConfig jobConfig = new BeamJobConfig();
+
+    String stepName = choice.split(TRANSFORMATION_RUNNER_PREFIX)[0];
+    StepMeta stepMeta = StepMeta.findStep(stepsList, stepName);
+    if(stepMeta.getStepID().equalsIgnoreCase(BeamConst.STRING_BEAM_DATAFLOW_RUNNER_PLUGIN_ID)) {
+      BeamDataflowRunnerMeta meta = (BeamDataflowRunnerMeta) stepMeta.getStepMetaInterface();
+      jobConfig.setName(meta.getName());
+      jobConfig.setRunnerTypeName(RunnerType.DataFlow.name());
+      jobConfig.setUserAgent(meta.getUserAgent());
+      jobConfig.setDescription("Config from transformation");
+      jobConfig.setTempLocation(meta.getTempLocation());
+      jobConfig.setPluginsToStage(meta.getPluginsToStage());
+      jobConfig.setStepPluginClasses(meta.getStepPluginClasses());
+      jobConfig.setStreamingKettleStepsFlushInterval(meta.getStreamingKettleStepsFlushInterval());
+      jobConfig.setFatJar(meta.getFatJar());
+
+      jobConfig.setGcpProjectId(meta.getGcpProjectId());
+      jobConfig.setGcpAppName(meta.getGcpAppName());
+      jobConfig.setGcpStagingLocation(meta.getGcpStagingLocation());
+      jobConfig.setGcpTemplateLocation(meta.getGcpTemplateLocation());
+      jobConfig.setGcpNetwork(meta.getGcpNetwork());
+      jobConfig.setGcpSubNetwork(meta.getGcpSubNetwork());
+      jobConfig.setGcpInitialNumberOfWorkers(meta.getGcpInitialNumberOfWorkers());
+      jobConfig.setGcpMaximumNumberOfWokers(meta.getGcpMaximumNumberOfWokers());
+      jobConfig.setGcpAutoScalingAlgorithm(meta.getGcpAutoScalingAlgorithm());
+      jobConfig.setGcpWorkerMachineType(meta.getGcpWorkerMachineType());
+      jobConfig.setGcpWorkerDiskType(meta.getGcpWorkerDiskType());
+      jobConfig.setGcpDiskSizeGb(meta.getGcpDiskSizeGb());
+      jobConfig.setGcpRegion(meta.getGcpRegion());
+      jobConfig.setGcpZone(meta.getGcpZone());
+      jobConfig.setGcpStreaming(meta.isGcpStreaming());
+
+      List<RunnerParameter> parameters = meta.getParameters();
+      for(RunnerParameter parameter: parameters) {
+        jobConfig.getParameters().add(new JobParameter(parameter.getVariable(), parameter.getValue()));
+      }
+    }
+    return jobConfig;
   }
 
   private KettleURLClassLoader createKettleURLClassLoader(List<String> jarFilenames) throws MalformedURLException {

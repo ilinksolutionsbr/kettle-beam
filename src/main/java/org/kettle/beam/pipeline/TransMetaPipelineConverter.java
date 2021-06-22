@@ -122,6 +122,7 @@ public class TransMetaPipelineConverter {
     stepHandlers.put( BeamConst.STRING_BEAM_FIRESTORE_OUTPUT_PLUGIN_ID, new BeamFirestoreOutputStepHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     stepHandlers.put( BeamConst.STRING_BEAM_DATABASE_PLUGIN_ID, new BeamDatabaseConnectorHandler(beamJobConfig, metaStore, transMeta, stepPluginClasses, xpPluginClasses));
     stepHandlers.put( BeamConst.STRING_BEAM_PROCEDURE_EXECUTOR_PLUGIN_ID, new BeamProcedureExecutorStepHandler(beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses));
+    stepHandlers.put( BeamConst.STRING_BEAM_DATAFLOW_RUNNER_PLUGIN_ID, new BeamRunnerDataflowStepHandler(beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses));
     genericStepHandler = new BeamGenericStepHandler( beamJobConfig, metaStore, metaStoreJson, transMeta, stepPluginClasses, xpPluginClasses );
   }
 
