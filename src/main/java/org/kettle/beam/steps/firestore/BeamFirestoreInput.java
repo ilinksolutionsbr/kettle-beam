@@ -52,13 +52,13 @@ public class BeamFirestoreInput extends BaseStep implements StepInterface {
 
     BeamFirestoreInputMeta meta = (BeamFirestoreInputMeta)smi;
 
-      RowMeta outputRowMeta = new RowMeta();
-      for(FirestoreField field : meta.getFields()){
-          outputRowMeta.addValueMeta(this.createValueMeta(field));
-      }
+    RowMeta outputRowMeta = new RowMeta();
+    for(FirestoreField field : meta.getFields()){
+        outputRowMeta.addValueMeta(this.createValueMeta(field));
+    }
 
-      String queryString = meta.getQuery();
-      String kind = meta.getKind();
+    String queryString = meta.getQuery();
+    String kind = meta.getKind();
 
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 

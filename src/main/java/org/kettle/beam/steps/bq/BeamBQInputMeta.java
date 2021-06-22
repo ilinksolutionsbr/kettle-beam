@@ -67,7 +67,6 @@ public class BeamBQInputMeta extends BaseStepMeta implements StepMetaInterface {
   }
 
   @Override public void getFields( RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore ) throws KettleStepException {
-
     try {
       for ( BQField field : fields ) {
         int type = ValueMetaFactory.getIdForValueMeta( field.getKettleType() );

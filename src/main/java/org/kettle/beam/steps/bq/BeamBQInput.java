@@ -123,34 +123,34 @@ public class BeamBQInput extends BaseStep implements StepInterface {
 
     private ValueMetaInterface createValueMeta(BQField field){
         if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BIG_NUMBER)){
-            return new ValueMetaBigNumber(field.getName());
+            return new ValueMetaBigNumber(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BINARY)) {
-            return new ValueMetaBinary(field.getName());
+            return new ValueMetaBinary(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_BOOLEAN)) {
-            return new ValueMetaBoolean(field.getName());
+            return new ValueMetaBoolean(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_DATE)) {
-            return new ValueMetaDate(field.getName());
+            return new ValueMetaDate(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_INTEGER)) {
-            return new ValueMetaInteger(field.getName());
+            return new ValueMetaInteger(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_INTERNET_ADDRESS)) {
-            return new ValueMetaInternetAddress(field.getName());
+            return new ValueMetaInternetAddress(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_NUMBER)) {
-            return new ValueMetaNumber(field.getName());
+            return new ValueMetaNumber(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_STRING)) {
-            return new ValueMetaString(field.getName());
+            return new ValueMetaString(field.getNewNameOrName());
 
         } else if(field.getKettleType().equalsIgnoreCase(BQField.BEAM_DATATYPE_TIMESTAMP)) {
-            return new ValueMetaTimestamp(field.getName());
+            return new ValueMetaTimestamp(field.getNewNameOrName());
 
         } else{
-            return new ValueMetaString(field.getName());
+            return new ValueMetaString(field.getNewNameOrName());
         }
     }
 

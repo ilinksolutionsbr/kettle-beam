@@ -45,6 +45,7 @@ import java.util.ArrayList;
 public class BeamDatabaseConnectorDialog extends BaseStepDialog implements StepDialogInterface {
 
     //region Attributes
+
     private static Class<?> PACKAGE = BeamDatabaseConnectorDialog.class;
     private BeamDatabaseConnectorMeta metadata;
 
