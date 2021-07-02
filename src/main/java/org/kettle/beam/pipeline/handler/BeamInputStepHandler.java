@@ -5,7 +5,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.transform.BeamInputTransform;
 import org.kettle.beam.core.util.JsonRowMeta;
-import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.BeamJobConfig;
 import org.kettle.beam.metastore.FileDefinition;
 import org.kettle.beam.steps.io.BeamInputMeta;
@@ -37,7 +36,7 @@ public class BeamInputStepHandler extends BeamBaseStepHandler implements BeamSte
     // Input handling
     //
     BeamInputMeta beamInputMeta = (BeamInputMeta) stepMeta.getStepMetaInterface();
-    FileDefinition inputFileDefinition = beamInputMeta.loadFileDefinition( metaStore );
+    FileDefinition inputFileDefinition = beamInputMeta.parseFileDefinition();
     RowMetaInterface fileRowMeta = inputFileDefinition.getRowMeta();
 
     // Apply the PBegin to KettleRow transform:

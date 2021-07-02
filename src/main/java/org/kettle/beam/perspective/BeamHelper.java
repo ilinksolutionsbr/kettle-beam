@@ -144,7 +144,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
         if(choice.toLowerCase().contains(TRANSFORMATION_RUNNER_PREFIX.toLowerCase())) {
           config = parseJobConfig(choice, runnerSteps);
         } else {
-          choice = choice.split(METASTORE_PREFIX)[0];
+          choice = choice.split(METASTORE_PREFIX)[1];
           config = factory.loadElement( choice );
         }
 
@@ -203,7 +203,7 @@ public class BeamHelper extends AbstractXulEventHandler implements ISpoonMenuCon
   private BeamJobConfig parseJobConfig(String choice, List<StepMeta> stepsList) {
     BeamJobConfig jobConfig = new BeamJobConfig();
 
-    String stepName = choice.split(TRANSFORMATION_RUNNER_PREFIX)[0];
+    String stepName = choice.split(TRANSFORMATION_RUNNER_PREFIX)[1];
     StepMeta stepMeta = StepMeta.findStep(stepsList, stepName);
     if(stepMeta.getStepID().equalsIgnoreCase(BeamConst.STRING_BEAM_DATAFLOW_RUNNER_PLUGIN_ID)) {
       BeamDataflowRunnerMeta meta = (BeamDataflowRunnerMeta) stepMeta.getStepMetaInterface();

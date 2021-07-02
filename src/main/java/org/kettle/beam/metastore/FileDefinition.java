@@ -145,7 +145,7 @@ public class FileDefinition implements Serializable {
   public String getFilePath() { return filePath; }
 
   /**
-   * @param enclosure The enclosure to set
+   * @param filePath The enclosure to set
    */
   public void setFilePath( String filePath ) {
     this.filePath = filePath;

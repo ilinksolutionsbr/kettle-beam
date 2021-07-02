@@ -2,7 +2,6 @@ package org.kettle.beam.pipeline.handler;
 
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.commons.lang.StringUtils;
 import org.kettle.beam.core.KettleRow;
 import org.kettle.beam.core.transform.BeamOutputTransform;
 import org.kettle.beam.core.util.JsonRowMeta;
@@ -33,14 +32,7 @@ public class BeamOutputStepHandler extends BeamBaseStepHandler implements BeamSt
                                     PCollection<KettleRow> input ) throws KettleException {
 
     BeamOutputMeta beamOutputMeta = (BeamOutputMeta) beamOutputStepMeta.getStepMetaInterface();
-    FileDefinition outputFileDefinition;
-    if ( StringUtils.isEmpty( beamOutputMeta.getFileDescriptionName() ) ) {
-      // Create a default file definition using standard output and sane defaults...
-      //
-      outputFileDefinition = getDefaultFileDefition( beamOutputStepMeta );
-    } else {
-      outputFileDefinition = beamOutputMeta.loadFileDefinition( metaStore );
-    }
+    FileDefinition outputFileDefinition = beamOutputMeta.parseFileDefinition();
 
     // Empty file definition? Add all fields in the output
     //

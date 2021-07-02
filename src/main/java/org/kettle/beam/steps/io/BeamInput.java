@@ -1,6 +1,5 @@
 package org.kettle.beam.steps.io;
 
-import com.google.api.client.util.Lists;
 import com.google.cloud.storage.contrib.nio.CloudStorageFileSystem;
 import org.kettle.beam.core.util.Strings;
 import org.kettle.beam.metastore.FieldDefinition;
@@ -14,15 +13,12 @@ import org.pentaho.di.trans.step.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -50,7 +46,8 @@ public class BeamInput extends BaseStep implements StepInterface {
 
   @Override public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
     BeamInputMeta meta = (BeamInputMeta)smi;
-    FileDefinition fileDefinition = meta.loadFileDefinition(metaStore);
+
+    FileDefinition fileDefinition = meta.parseFileDefinition();
 
     if(this.isLocalFile(meta)){
       this.readLocalFile(meta, fileDefinition);

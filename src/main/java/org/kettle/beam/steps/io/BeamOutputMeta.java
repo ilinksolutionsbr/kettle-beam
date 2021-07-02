@@ -1,14 +1,20 @@
 package org.kettle.beam.steps.io;
 
 import org.apache.commons.lang.StringUtils;
+import org.kettle.beam.metastore.FieldDefinition;
 import org.kettle.beam.metastore.FileDefinition;
 import org.kettle.beam.util.BeamConst;
+import org.pentaho.di.core.Const;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettlePluginException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.repository.Repository;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
@@ -21,6 +27,7 @@ import org.pentaho.metastore.persist.MetaStoreFactory;
 import org.pentaho.metastore.util.PentahoDefaults;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Step(
@@ -38,16 +45,23 @@ public class BeamOutputMeta extends BaseStepMeta implements StepMetaInterface {
   public static final String FILE_SUFFIX = "file_suffix";
   public static final String WINDOWED = "windowed";
 
+  public static final String SEPARATOR = "separator";
+  public static final String ENCLOSURE = "enclosure";
 
   private String outputLocation;
-
   private String fileDescriptionName;
-
   private String filePrefix;
-
   private String fileSuffix;
-
   private boolean windowed;
+
+  private String separator;
+  private String enclosure;
+  private List<FieldDefinition> fields;
+
+  public BeamOutputMeta() {
+    super();
+    fields = new ArrayList<>();
+  }
 
   @Override public void setDefault() {
   }
@@ -80,6 +94,30 @@ public class BeamOutputMeta extends BaseStepMeta implements StepMetaInterface {
     return fileDefinition;
   }
 
+  @Override public void getFields(RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore )
+          throws KettleStepException {
+
+    if (metaStore!=null) {
+      FileDefinition fileDefinition = parseFileDefinition();
+
+      try {
+        inputRowMeta.clear();
+        inputRowMeta.addRowMeta( fileDefinition.getRowMeta() );
+      } catch ( KettlePluginException e ) {
+        throw new KettleStepException( "Unable to get row layout of file definition '" + fileDefinition.getName() + "'", e );
+      }
+    }
+  }
+
+  public FileDefinition parseFileDefinition() throws KettleStepException {
+    FileDefinition fileDefinition = new FileDefinition();
+    fileDefinition.setFieldDefinitions(this.getFields());
+    fileDefinition.setSeparator(Const.NVL(this.getSeparator(), ""));
+    fileDefinition.setEnclosure(Const.NVL(this.getEnclosure(), ""));
+
+    return fileDefinition;
+  }
+
   @Override public String getXML() throws KettleException {
     StringBuffer xml = new StringBuffer(  );
 
@@ -88,6 +126,21 @@ public class BeamOutputMeta extends BaseStepMeta implements StepMetaInterface {
     xml.append( XMLHandler.addTagValue( FILE_PREFIX, filePrefix) );
     xml.append( XMLHandler.addTagValue( FILE_SUFFIX, fileSuffix) );
     xml.append( XMLHandler.addTagValue( WINDOWED, windowed) );
+
+    xml.append( XMLHandler.addTagValue( SEPARATOR, separator) );
+    xml.append( XMLHandler.addTagValue( ENCLOSURE, enclosure) );
+
+    xml.append( XMLHandler.openTag( "fields" ) );
+    for ( FieldDefinition field : fields ) {
+      xml.append( XMLHandler.openTag( "field" ) );
+      xml.append( XMLHandler.addTagValue( "name", field.getName() ) );
+      xml.append( XMLHandler.addTagValue( "type", field.getKettleType() ) );
+      xml.append( XMLHandler.addTagValue( "length", field.getLength() ) );
+      xml.append( XMLHandler.addTagValue( "precision", field.getPrecision() ) );
+      xml.append( XMLHandler.addTagValue( "mask", field.getFormatMask() ) );
+      xml.append( XMLHandler.closeTag( "field" ) );
+    }
+    xml.append( XMLHandler.closeTag( "fields" ) );
 
     return xml.toString();
   }
@@ -100,6 +153,20 @@ public class BeamOutputMeta extends BaseStepMeta implements StepMetaInterface {
     fileSuffix = XMLHandler.getTagValue( stepnode, FILE_SUFFIX );
     windowed = "Y".equalsIgnoreCase( XMLHandler.getTagValue( stepnode, WINDOWED) );
 
+    separator = XMLHandler.getTagValue( stepnode, SEPARATOR );
+    enclosure = XMLHandler.getTagValue( stepnode, ENCLOSURE );
+
+    Node fieldsNode = XMLHandler.getSubNode( stepnode, "fields" );
+    List<Node> fieldNodes = XMLHandler.getNodes( fieldsNode, "field" );
+    fields = new ArrayList<>();
+    for ( Node fieldNode : fieldNodes ) {
+      String name = XMLHandler.getTagValue( fieldNode, "name" );
+      String kettleType = XMLHandler.getTagValue( fieldNode, "type" );
+      String mask = XMLHandler.getTagValue( fieldNode, "mask" );
+      String length = XMLHandler.getTagValue( fieldNode, "length" );
+      String precision = XMLHandler.getTagValue( fieldNode, "precision" );
+      fields.add( new FieldDefinition( name, kettleType, Integer.parseInt(length), Integer.parseInt(precision), mask ) );
+    }
   }
 
   /**
@@ -180,5 +247,29 @@ public class BeamOutputMeta extends BaseStepMeta implements StepMetaInterface {
    */
   public void setWindowed( boolean windowed ) {
     this.windowed = windowed;
+  }
+
+  public String getSeparator() {
+    return separator;
+  }
+
+  public void setSeparator(String separator) {
+    this.separator = separator;
+  }
+
+  public String getEnclosure() {
+    return enclosure;
+  }
+
+  public void setEnclosure(String enclosure) {
+    this.enclosure = enclosure;
+  }
+
+  public List<FieldDefinition> getFields() {
+    return fields;
+  }
+
+  public void setFields(List<FieldDefinition> fields) {
+    this.fields = fields;
   }
 }
